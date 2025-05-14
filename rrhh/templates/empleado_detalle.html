@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle del Empleado | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .employee-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .employee-detail {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .detail-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .detail-section:last-child {
+        border-bottom: none;
+    }
+    .detail-title {
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+    .detail-item {
+        margin-bottom: 1rem;
+    }
+    .detail-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    .detail-value {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="employee-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">{{ empleado.nombre }} {{ empleado.apellido }}</h1>
+                <p class="lead">
+                    {{ empleado.puesto.nombre }} en {{ empleado.puesto.departamento.nombre }}
+                    <span class="badge {% if empleado.estado.nombre == 'Activo' %}bg-success{% elif empleado.estado.nombre == 'Inactivo' %}bg-warning{% else %}bg-danger{% endif %} status-badge ms-2">
+                        {{ empleado.estado.nombre }}
+                    </span>
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'empleados_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="employee-detail">
+            <div class="detail-section">
+                <h4 class="detail-title">Información Personal</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Nombre Completo</div>
+                            <div class="detail-value">{{ empleado.nombre }} {{ empleado.apellido }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">DPI</div>
+                            <div class="detail-value">{{ empleado.dpi }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Fecha de Nacimiento</div>
+                            <div class="detail-value">{{ empleado.fecha_nacimiento }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Estado</div>
+                            <div class="detail-value">
+                                <span class="badge {% if empleado.estado.nombre == 'Activo' %}bg-success{% elif empleado.estado.nombre == 'Inactivo' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ empleado.estado.nombre }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h4 class="detail-title">Información de Contacto</h4>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="detail-item">
+                            <div class="detail-label">Dirección</div>
+                            <div class="detail-value">{{ empleado.direccion }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Teléfono</div>
+                            <div class="detail-value">{{ empleado.telefono }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Correo Electrónico</div>
+                            <div class="detail-value">
+                                {% if empleado.correo %}
+                                    {{ empleado.correo }}
+                                {% else %}
+                                    <span class="text-muted">No disponible</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h4 class="detail-title">Información Laboral</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Puesto</div>
+                            <div class="detail-value">{{ empleado.puesto.nombre }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Departamento</div>
+                            <div class="detail-value">{{ empleado.puesto.departamento.nombre }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Fecha de Ingreso</div>
+                            <div class="detail-value">{{ empleado.fecha_ingreso }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Salario Base</div>
+                            <div class="detail-value">Q{{ empleado.puesto.salario_base }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% if empleado.fecha_baja %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Fecha de Baja</div>
+                            <div class="detail-value text-danger">{{ empleado.fecha_baja }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'empleado_editar' empleado.id %}" class="btn btn-primary me-md-2">
+                    <i class="fas fa-edit me-2"></i>Editar Información
+                </a>
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="fas fa-user-times me-2"></i>Dar de Baja
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Información complementaria en tarjetas -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Prestaciones</h5>
+                <a href="#" class="btn btn-sm btn-primary">Nueva</a>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for prestacion in empleado.prestaciones.all %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ prestacion.tipo_prestacion.nombre }}</h6>
+                                <small>{{ prestacion.fecha_prestacion }}</small>
+                            </div>
+                            <p class="mb-1">Q{{ prestacion.monto }}</p>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-info-circle text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No hay prestaciones registradas</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Indicadores de Productividad</h5>
+                <a href="#" class="btn btn-sm btn-primary">Nuevo</a>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for indicador in empleado.indicadores.all %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ indicador.nombre }}</h6>
+                                <small>{{ indicador.fecha_registro }}</small>
+                            </div>
+                            <p class="mb-1">Valor: {{ indicador.valor }}</p>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-info-circle text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No hay indicadores registrados</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Últimas Nóminas</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for nomina in empleado.nominas.all|slice:":5" %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ nomina.tipo_nomina.nombre }}</h6>
+                                <small>{{ nomina.fecha_generacion }}</small>
+                            </div>
+                            <p class="mb-1">Periodo: {{ nomina.fecha_inicio }} - {{ nomina.fecha_fin }}</p>
+                            <p class="mb-1">Total a pagar: <strong>Q{{ nomina.total_pagar }}</strong></p>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-info-circle text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No hay nóminas registradas</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para dar de baja -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Baja de Empleado</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea dar de baja al empleado <strong>{{ empleado.nombre }} {{ empleado.apellido }}</strong>?</p>
+                <p class="text-danger">Esta acción marcará al empleado como "De baja" y registrará la fecha de baja actual.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'empleado_eliminar' empleado.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmar Baja</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .employee-form {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .form-section-title {
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">{{ titulo }}</h1>
+                <p class="lead">{% if accion == 'crear' %}Registrar un nuevo empleado en el sistema{% else %}Actualizar información del empleado{% endif %}</p>
+            </div>
+            <div>
+                <a href="{% url 'empleados_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="employee-form">
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Por favor corrige los siguientes errores:</strong>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        
+        <div class="form-section">
+            <h4 class="form-section-title">Información Personal</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.nombre.id_for_label }}" class="form-label">{{ form.nombre.label }}</label>
+                    {{ form.nombre }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.apellido.id_for_label }}" class="form-label">{{ form.apellido.label }}</label>
+                    {{ form.apellido }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.dpi.id_for_label }}" class="form-label">{{ form.dpi.label }}</label>
+                    {{ form.dpi }}
+                    <div class="form-text">El DPI debe tener 13 dígitos numéricos.</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.fecha_nacimiento.id_for_label }}" class="form-label">{{ form.fecha_nacimiento.label }}</label>
+                    {{ form.fecha_nacimiento }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h4 class="form-section-title">Información de Contacto</h4>
+            <div class="mb-3">
+                <label for="{{ form.direccion.id_for_label }}" class="form-label">{{ form.direccion.label }}</label>
+                {{ form.direccion }}
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.telefono.id_for_label }}" class="form-label">{{ form.telefono.label }}</label>
+                    {{ form.telefono }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.correo.id_for_label }}" class="form-label">{{ form.correo.label }}</label>
+                    {{ form.correo }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h4 class="form-section-title">Información Laboral</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.puesto.id_for_label }}" class="form-label">{{ form.puesto.label }}</label>
+                    {{ form.puesto }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.estado.id_for_label }}" class="form-label">{{ form.estado.label }}</label>
+                    {{ form.estado }}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.fecha_ingreso.id_for_label }}" class="form-label">{{ form.fecha_ingreso.label }}</label>
+                    {{ form.fecha_ingreso }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'empleados_list' %}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>{{ boton }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Sesión | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-form {
+        max-width: 400px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .login-form h2 {
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    .login-icon {
+        font-size: 3rem;
+        color: #0d6efd;
+        display: block;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-form">
+    <i class="fas fa-user-circle login-icon"></i>
+    <h2>Iniciar Sesión</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="username" class="form-label">Usuario</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                <input type="text" class="form-control" id="username" name="username" required>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+            </button>
+        </div>
+    </form>
+    
+    <hr class="my-4">
+    
+    <div class="text-center">
+        <p>¿No tienes una cuenta? <a href="{% url 'register' %}">Regístrate aquí</a></p>
+    </div>
+</div>
+{% endblock %}

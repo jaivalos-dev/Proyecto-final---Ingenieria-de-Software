@@ -1,0 +1,392 @@
+-- Script de funciones y procedimientos almacenados para PostgreSQL
+-- Gestión RRHH - Cálculos específicos para Guatemala
+
+-- Función para calcular el IGSS (4.83% del salario)
+CREATE OR REPLACE FUNCTION calcular_igss(salario DECIMAL) RETURNS DECIMAL AS $$
+BEGIN
+    RETURN ROUND(salario * 0.0483, 2);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular el ISR (Impuesto Sobre la Renta)
+-- En Guatemala hay diferentes escalas según el salario anual
+CREATE OR REPLACE FUNCTION calcular_isr_mensual(salario_mensual DECIMAL) RETURNS DECIMAL AS $$
+DECLARE
+    salario_anual DECIMAL;
+    isr_anual DECIMAL;
+    isr_mensual DECIMAL;
+BEGIN
+    salario_anual := salario_mensual * 12;
+    
+    -- Cálculo según la escala de ISR en Guatemala
+    IF salario_anual <= 300000 THEN
+        -- Exento hasta Q300,000
+        isr_anual := 0;
+    ELSE
+        -- 5% sobre el excedente de Q300,000
+        isr_anual := (salario_anual - 300000) * 0.05;
+    END IF;
+    
+    -- Dividir el ISR anual entre 12 para obtener el mensual
+    isr_mensual := ROUND(isr_anual / 12, 2);
+    
+    RETURN isr_mensual;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular Bono 14 (proporcional a días trabajados)
+CREATE OR REPLACE FUNCTION calcular_bono14(
+    salario DECIMAL, 
+    fecha_inicio DATE, 
+    fecha_fin DATE
+) RETURNS DECIMAL AS $$
+DECLARE
+    total_dias INTEGER;
+    dias_trabajados INTEGER;
+    bono DECIMAL;
+BEGIN
+    -- El período para Bono 14 es del 1 de julio al 30 de junio
+    IF fecha_inicio IS NULL OR fecha_fin IS NULL THEN
+        RETURN 0;
+    END IF;
+    
+    -- Si la fecha de inicio es posterior a la fecha de fin, retornar 0
+    IF fecha_inicio > fecha_fin THEN
+        RETURN 0;
+    END IF;
+    
+    -- Calcular los días totales del período (365 o 366 en año bisiesto)
+    total_dias := 365;
+    IF DATE_PART('year', fecha_fin) % 4 = 0 THEN
+        total_dias := 366;
+    END IF;
+    
+    -- Calcular días trabajados en el período
+    dias_trabajados := fecha_fin - fecha_inicio + 1;
+    
+    -- Si los días trabajados superan el total de días, ajustar
+    IF dias_trabajados > total_dias THEN
+        dias_trabajados := total_dias;
+    END IF;
+    
+    -- Calcular el Bono 14 proporcional
+    bono := ROUND((salario * dias_trabajados) / total_dias, 2);
+    
+    RETURN bono;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular Aguinaldo (proporcional a días trabajados)
+CREATE OR REPLACE FUNCTION calcular_aguinaldo(
+    salario DECIMAL, 
+    fecha_inicio DATE, 
+    fecha_fin DATE
+) RETURNS DECIMAL AS $$
+DECLARE
+    total_dias INTEGER;
+    dias_trabajados INTEGER;
+    aguinaldo DECIMAL;
+BEGIN
+    -- El período para Aguinaldo es del 1 de diciembre al 30 de noviembre
+    IF fecha_inicio IS NULL OR fecha_fin IS NULL THEN
+        RETURN 0;
+    END IF;
+    
+    -- Si la fecha de inicio es posterior a la fecha de fin, retornar 0
+    IF fecha_inicio > fecha_fin THEN
+        RETURN 0;
+    END IF;
+    
+    -- Calcular los días totales del período (365 o 366 en año bisiesto)
+    total_dias := 365;
+    IF DATE_PART('year', fecha_fin) % 4 = 0 THEN
+        total_dias := 366;
+    END IF;
+    
+    -- Calcular días trabajados en el período
+    dias_trabajados := fecha_fin - fecha_inicio + 1;
+    
+    -- Si los días trabajados superan el total de días, ajustar
+    IF dias_trabajados > total_dias THEN
+        dias_trabajados := total_dias;
+    END IF;
+    
+    -- Calcular el Aguinaldo proporcional
+    aguinaldo := ROUND((salario * dias_trabajados) / total_dias, 2);
+    
+    RETURN aguinaldo;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular días de vacaciones según tiempo trabajado
+CREATE OR REPLACE FUNCTION calcular_dias_vacaciones(fecha_ingreso DATE, fecha_actual DATE) RETURNS INTEGER AS $$
+DECLARE
+    anios_trabajados INTEGER;
+    dias_vacaciones INTEGER;
+BEGIN
+    -- Calcular años trabajados
+    anios_trabajados := DATE_PART('year', AGE(fecha_actual, fecha_ingreso));
+    
+    -- En Guatemala son 15 días hábiles por año trabajado
+    dias_vacaciones := 15;
+    
+    RETURN dias_vacaciones;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular la indemnización (un mes de salario por año trabajado)
+CREATE OR REPLACE FUNCTION calcular_indemnizacion(
+    salario DECIMAL, 
+    fecha_ingreso DATE, 
+    fecha_baja DATE
+) RETURNS DECIMAL AS $$
+DECLARE
+    anios_trabajados DECIMAL;
+    indemnizacion DECIMAL;
+BEGIN
+    -- Calcular años trabajados, incluyendo fracciones
+    anios_trabajados := DATE_PART('year', AGE(fecha_baja, fecha_ingreso)) + 
+                        DATE_PART('month', AGE(fecha_baja, fecha_ingreso)) / 12.0 +
+                        DATE_PART('day', AGE(fecha_baja, fecha_ingreso)) / 365.0;
+    
+    -- La indemnización es un mes de salario por año trabajado
+    indemnizacion := ROUND(salario * anios_trabajados, 2);
+    
+    RETURN indemnizacion;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular nómina mensual
+CREATE OR REPLACE FUNCTION calcular_nomina_mensual(
+    empleado_id INTEGER, 
+    fecha_inicio DATE, 
+    fecha_fin DATE
+) RETURNS TABLE (
+    total_devengado DECIMAL,
+    total_deducciones DECIMAL,
+    total_pagar DECIMAL
+) AS $$
+DECLARE
+    salario_base DECIMAL;
+    bonificacion_incentivo DECIMAL;
+    igss DECIMAL;
+    isr DECIMAL;
+    otras_deducciones DECIMAL;
+    salario_total DECIMAL;
+BEGIN
+    -- Obtener salario base del empleado
+    SELECT p.salario_base INTO salario_base
+    FROM rrhh_empleado e
+    JOIN rrhh_puesto p ON e.puesto_id = p.id
+    WHERE e.id = empleado_id;
+    
+    -- Bonificación incentivo (Q250.00 mínimo)
+    bonificacion_incentivo := 250.00;
+    
+    -- Calcular salario total
+    salario_total := salario_base + bonificacion_incentivo;
+    
+    -- Calcular deducciones
+    igss := calcular_igss(salario_base);  -- IGSS solo se calcula sobre el salario base
+    isr := calcular_isr_mensual(salario_base);  -- ISR solo se calcula sobre el salario base
+    
+    -- Sumar otras deducciones según se necesite
+    otras_deducciones := 0;
+    
+    -- Calcular totales
+    total_devengado := salario_total;
+    total_deducciones := igss + isr + otras_deducciones;
+    total_pagar := total_devengado - total_deducciones;
+    
+    RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular nómina quincenal
+CREATE OR REPLACE FUNCTION calcular_nomina_quincenal(
+    empleado_id INTEGER, 
+    fecha_inicio DATE,
+    fecha_fin DATE
+) RETURNS TABLE (
+    total_devengado DECIMAL,
+    total_deducciones DECIMAL,
+    total_pagar DECIMAL
+) AS $$
+DECLARE
+    salario_base DECIMAL;
+    salario_quincenal DECIMAL;
+    bonificacion_incentivo DECIMAL;
+    igss DECIMAL;
+    isr DECIMAL;
+    otras_deducciones DECIMAL;
+    salario_total DECIMAL;
+BEGIN
+    -- Obtener salario base del empleado
+    SELECT p.salario_base INTO salario_base
+    FROM rrhh_empleado e
+    JOIN rrhh_puesto p ON e.puesto_id = p.id
+    WHERE e.id = empleado_id;
+    
+    -- Calcular salario quincenal (mitad del mensual)
+    salario_quincenal := salario_base / 2;
+    
+    -- Bonificación incentivo (Q250.00/2 = Q125.00 mínimo para quincena)
+    bonificacion_incentivo := 125.00;
+    
+    -- Calcular salario total
+    salario_total := salario_quincenal + bonificacion_incentivo;
+    
+    -- Calcular deducciones
+    igss := calcular_igss(salario_quincenal);  -- IGSS solo se calcula sobre el salario base
+    isr := calcular_isr_mensual(salario_base) / 2;  -- ISR se calcula sobre el salario mensual y se divide
+    
+    -- Sumar otras deducciones según se necesite
+    otras_deducciones := 0;
+    
+    -- Calcular totales
+    total_devengado := salario_total;
+    total_deducciones := igss + isr + otras_deducciones;
+    total_pagar := total_devengado - total_deducciones;
+    
+    RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Función para calcular nómina semanal
+CREATE OR REPLACE FUNCTION calcular_nomina_semanal(
+    empleado_id INTEGER, 
+    fecha_inicio DATE,
+    fecha_fin DATE
+) RETURNS TABLE (
+    total_devengado DECIMAL,
+    total_deducciones DECIMAL,
+    total_pagar DECIMAL
+) AS $$
+DECLARE
+    salario_base DECIMAL;
+    salario_semanal DECIMAL;
+    bonificacion_incentivo DECIMAL;
+    igss DECIMAL;
+    isr DECIMAL;
+    otras_deducciones DECIMAL;
+    salario_total DECIMAL;
+BEGIN
+    -- Obtener salario base del empleado
+    SELECT p.salario_base INTO salario_base
+    FROM rrhh_empleado e
+    JOIN rrhh_puesto p ON e.puesto_id = p.id
+    WHERE e.id = empleado_id;
+    
+    -- Calcular salario semanal (una cuarta parte del mensual)
+    salario_semanal := ROUND(salario_base / 4.33, 2);  -- 4.33 semanas promedio en un mes
+    
+    -- Bonificación incentivo (Q250.00/4.33 = Q57.74 semanal aproximado)
+    bonificacion_incentivo := ROUND(250.00 / 4.33, 2);
+    
+    -- Calcular salario total
+    salario_total := salario_semanal + bonificacion_incentivo;
+    
+    -- Calcular deducciones
+    igss := calcular_igss(salario_semanal);  -- IGSS solo se calcula sobre el salario base
+    isr := calcular_isr_mensual(salario_base) / 4.33;  -- ISR se calcula sobre el salario mensual y se divide
+    
+    -- Sumar otras deducciones según se necesite
+    otras_deducciones := 0;
+    
+    -- Calcular totales
+    total_devengado := salario_total;
+    total_deducciones := igss + isr + otras_deducciones;
+    total_pagar := total_devengado - total_deducciones;
+    
+    RETURN NEXT;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger para actualizar la nómina con las deducciones
+CREATE OR REPLACE FUNCTION actualizar_nomina_deducciones() RETURNS TRIGGER AS $$
+BEGIN
+    -- Crear deducciones automáticas para IGSS
+    INSERT INTO rrhh_deduccion (nomina_id, nombre, monto)
+    VALUES (NEW.id, 'IGSS', calcular_igss(NEW.total_devengado - 250.00));  -- Restar bonificación incentivo
+    
+    -- Crear deducciones para ISR si aplica
+    DECLARE
+        isr_mensual DECIMAL;
+    BEGIN
+        isr_mensual := calcular_isr_mensual(NEW.total_devengado - 250.00);  -- Restar bonificación incentivo
+        
+        IF isr_mensual > 0 THEN
+            INSERT INTO rrhh_deduccion (nomina_id, nombre, monto)
+            VALUES (NEW.id, 'ISR', isr_mensual);
+        END IF;
+    END;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Asociar el trigger con la tabla de nómina
+CREATE TRIGGER trigger_actualizar_nomina_deducciones
+AFTER INSERT ON rrhh_nomina
+FOR EACH ROW
+EXECUTE FUNCTION actualizar_nomina_deducciones();
+
+-- Función para generar nómina automática
+CREATE OR REPLACE FUNCTION generar_nomina(
+    p_tipo_nomina_id INTEGER,
+    p_fecha_inicio DATE,
+    p_fecha_fin DATE
+) RETURNS VOID AS $$
+DECLARE
+    v_empleado RECORD;
+    v_resultado RECORD;
+    v_tipo_nomina_nombre TEXT;
+BEGIN
+    -- Obtener el nombre del tipo de nómina
+    SELECT nombre INTO v_tipo_nomina_nombre
+    FROM rrhh_tiponomina
+    WHERE id = p_tipo_nomina_id;
+    
+    -- Recorrer todos los empleados activos
+    FOR v_empleado IN 
+        SELECT e.id, p.salario_base
+        FROM rrhh_empleado e
+        JOIN rrhh_puesto p ON e.puesto_id = p.id
+        JOIN rrhh_estado es ON e.estado_id = es.id
+        WHERE es.nombre = 'Activo'
+    LOOP
+        -- Calcular los valores de nómina según el tipo
+        IF v_tipo_nomina_nombre = 'Mensual' THEN
+            SELECT * INTO v_resultado 
+            FROM calcular_nomina_mensual(v_empleado.id, p_fecha_inicio, p_fecha_fin);
+        ELSIF v_tipo_nomina_nombre = 'Quincenal' THEN
+            SELECT * INTO v_resultado 
+            FROM calcular_nomina_quincenal(v_empleado.id, p_fecha_inicio, p_fecha_fin);
+        ELSIF v_tipo_nomina_nombre = 'Semanal' THEN
+            SELECT * INTO v_resultado 
+            FROM calcular_nomina_semanal(v_empleado.id, p_fecha_inicio, p_fecha_fin);
+        END IF;
+        
+        -- Insertar la nómina
+        INSERT INTO rrhh_nomina (
+            empleado_id,
+            fecha_inicio,
+            fecha_fin,
+            tipo_nomina_id,
+            total_devengado,
+            total_deducciones,
+            total_pagar,
+            fecha_generacion
+        ) VALUES (
+            v_empleado.id,
+            p_fecha_inicio,
+            p_fecha_fin,
+            p_tipo_nomina_id,
+            v_resultado.total_devengado,
+            v_resultado.total_deducciones,
+            v_resultado.total_pagar,
+            CURRENT_DATE
+        );
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;

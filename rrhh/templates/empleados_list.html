@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Empleados | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .employee-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .filter-section {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .employee-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+        transition: all 0.3s;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="employee-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Gestión de Empleados</h1>
+                <p class="lead">Administra la información de los colaboradores</p>
+            </div>
+            <div>
+                <a href="{% url 'empleado_nuevo' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus me-2"></i>Nuevo Empleado
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="filter-section">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label for="nombre" class="form-label">Buscar por nombre</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ request.GET.nombre|default:'' }}">
+        </div>
+        <div class="col-md-3">
+            <label for="departamento" class="form-label">Departamento</label>
+            <select class="form-select" id="departamento" name="departamento">
+                <option value="">Todos</option>
+                {% for departamento in departamentos %}
+                    <option value="{{ departamento.id }}" {% if request.GET.departamento == departamento.id|stringformat:'i' %}selected{% endif %}>
+                        {{ departamento.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="estado" class="form-label">Estado</label>
+            <select class="form-select" id="estado" name="estado">
+                <option value="">Todos</option>
+                {% for estado in estados %}
+                    <option value="{{ estado.id }}" {% if request.GET.estado == estado.id|stringformat:'i' %}selected{% endif %}>
+                        {{ estado.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-search me-2"></i>Filtrar
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="row">
+    {% for empleado in empleados %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 employee-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ empleado.nombre }} {{ empleado.apellido }}</h5>
+                    <span class="badge {% if empleado.estado.nombre == 'Activo' %}bg-success{% elif empleado.estado.nombre == 'Inactivo' %}bg-warning{% else %}bg-danger{% endif %} status-badge">
+                        {{ empleado.estado.nombre }}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">DPI</small>
+                        <div>{{ empleado.dpi }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Puesto</small>
+                        <div>{{ empleado.puesto.nombre }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Departamento</small>
+                        <div>{{ empleado.puesto.departamento.nombre }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Fecha de Ingreso</small>
+                        <div>{{ empleado.fecha_ingreso }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Contacto</small>
+                        <div>
+                            <i class="fas fa-phone-alt me-1 text-muted"></i> {{ empleado.telefono }}<br>
+                            {% if empleado.correo %}
+                                <i class="fas fa-envelope me-1 text-muted"></i> {{ empleado.correo }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="btn-group w-100">
+                        <a href="{% url 'empleado_detalle' empleado.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Ver
+                        </a>
+                        <a href="{% url 'empleado_editar' empleado.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ empleado.id }}">
+                            <i class="fas fa-trash-alt me-1"></i>Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal de confirmación para eliminar -->
+        <div class="modal fade" id="deleteModal{{ empleado.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirmar Eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>¿Está seguro que desea eliminar al empleado <strong>{{ empleado.nombre }} {{ empleado.apellido }}</strong>?</p>
+                        <p class="text-danger">Esta acción no se puede deshacer.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="post" action="{% url 'empleado_eliminar' empleado.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No se encontraron empleados con los criterios de búsqueda.
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Paginación -->
+{% if empleados.has_other_pages %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if empleados.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.nombre %}&nombre={{ request.GET.nombre }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ empleados.previous_page_number }}{% if request.GET.nombre %}&nombre={{ request.GET.nombre }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                </li>
+            {% endif %}
+            
+            {% for i in empleados.paginator.page_range %}
+                {% if empleados.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% elif i > empleados.number|add:'-3' and i < empleados.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if request.GET.nombre %}&nombre={{ request.GET.nombre }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                            {{ i }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if empleados.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ empleados.next_page_number }}{% if request.GET.nombre %}&nombre={{ request.GET.nombre }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ empleados.paginator.num_pages }}{% if request.GET.nombre %}&nombre={{ request.GET.nombre }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}{% if request.GET.estado %}&estado={{ request.GET.estado }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}
