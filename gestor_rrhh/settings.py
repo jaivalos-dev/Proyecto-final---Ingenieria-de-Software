@@ -73,17 +73,29 @@ WSGI_APPLICATION = 'gestor_rrhh.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# BASE DE DATOS LOCAL
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'GestorRRHH',  # Reemplaza con el nombre de tu base de datos
+#         'USER': 'postgres',  # Ajusta si tu usuario es diferente
+#         'PASSWORD': 'root',  # Reemplaza con tu contraseña
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
+# BASE DE DATOS EN AWS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'GestorRRHH',  # Reemplaza con el nombre de tu base de datos
+        'NAME': 'RecursosHumanosUMG',  # Reemplaza con el nombre de tu base de datos
         'USER': 'postgres',  # Ajusta si tu usuario es diferente
-        'PASSWORD': 'root',  # Reemplaza con tu contraseña
-        'HOST': 'localhost',
+        'PASSWORD': 'admin2025',  # Reemplaza con tu contraseña
+        'HOST': '3.145.92.13',
         'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
