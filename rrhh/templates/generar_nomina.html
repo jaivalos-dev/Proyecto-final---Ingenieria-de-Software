@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Generar Nómina | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nomina-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .nomina-form {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    .section-title {
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nomina-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Generar Nueva Nómina</h1>
+                <p class="lead">Seleccione los parámetros para generar la nómina</p>
+            </div>
+            <div>
+                <a href="{% url 'nomina_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="nomina-form">
+    <form method="post" action="{% url 'generar_nomina' %}">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Por favor corrija los siguientes errores:</strong>
+                <ul>
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        
+        <div class="form-section">
+            <h4 class="section-title">Parámetros de la Nómina</h4>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.tipo_nomina.id_for_label }}" class="form-label">{{ form.tipo_nomina.label }}</label>
+                    {{ form.tipo_nomina }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.fecha_inicio.id_for_label }}" class="form-label">{{ form.fecha_inicio.label }}</label>
+                    {{ form.fecha_inicio }}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.fecha_fin.id_for_label }}" class="form-label">{{ form.fecha_fin.label }}</label>
+                    {{ form.fecha_fin }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h4 class="section-title">Filtros (Opcional)</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.departamento.id_for_label }}" class="form-label">{{ form.departamento.label }}</label>
+                    {{ form.departamento }}
+                    <div class="form-text">Si no selecciona un departamento, se generará la nómina para todos los empleados.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'nomina_list' %}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-file-invoice-dollar me-2"></i>Continuar
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Información Importante</h5>
+    </div>
+    <div class="card-body">
+        <h6>Tipos de Nómina</h6>
+        <ul>
+            <li><strong>Mensual:</strong> Se genera una vez al mes, típicamente al final del mes.</li>
+            <li><strong>Quincenal:</strong> Se genera dos veces al mes, generalmente los días 15 y fin de mes.</li>
+            <li><strong>Semanal:</strong> Se genera cada semana, generalmente al final de la semana laboral.</li>
+        </ul>
+        
+        <h6>Cálculos que se aplican automáticamente:</h6>
+        <ul>
+            <li><strong>IGSS:</strong> 4.83% sobre el salario base (no aplica a bonificaciones).</li>
+            <li><strong>ISR:</strong> Se calcula según la escala de impuestos vigente en Guatemala.</li>
+            <li><strong>Bonificación Incentivo:</strong> Q250.00 mensuales (proporcional según tipo de nómina).</li>
+            <li><strong>Horas Extras:</strong> Se pagan al 150% del valor de la hora normal.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

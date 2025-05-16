@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Nómina | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nomina-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .nomina-card {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .badge-tipo {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .table-nomina thead th {
+        background-color: #f8f9fa;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+    .table-responsive {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    .info-section {
+        background-color: #f8f9fa;
+        border-radius: 0.3rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .info-card {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .info-title {
+        color: #495057;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    .total-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+    .total-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        text-transform: uppercase;
+    }
+    .action-buttons {
+        position: sticky;
+        bottom: 1rem;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 1rem 0;
+        border-top: 1px solid #dee2e6;
+        z-index: 2;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nomina-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">
+                    Nómina 
+                    <span class="badge {% if tipo_nomina.nombre == 'Mensual' %}bg-primary{% elif tipo_nomina.nombre == 'Quincenal' %}bg-success{% else %}bg-info{% endif %} badge-tipo">
+                        {{ tipo_nomina.nombre }}
+                    </span>
+                </h1>
+                <p class="lead">Período: {{ primera_nomina.fecha_inicio }} al {{ primera_nomina.fecha_fin }}</p>
+            </div>
+            <div>
+                <a href="{% url 'nomina_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="nomina-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4>Detalle por Empleado</h4>
+                <div>
+                    <button class="btn btn-outline-primary">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button>
+                    <button class="btn btn-outline-success ms-2">
+                        <i class="fas fa-file-excel me-2"></i>Exportar
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-nomina">
+                    <thead>
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Puesto</th>
+                            <th>Departamento</th>
+                            <th>Devengado</th>
+                            <th>Deducciones</th>
+                            <th>Total a Pagar</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nomina in nominas %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div>
+                                            <span class="fw-bold">{{ nomina.empleado.nombre }} {{ nomina.empleado.apellido }}</span><br>
+                                            <small class="text-muted">{{ nomina.empleado.dpi }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ nomina.empleado.puesto.nombre }}</td>
+                                <td>{{ nomina.empleado.puesto.departamento.nombre }}</td>
+                                <td class="text-end">Q{{ nomina.total_devengado|floatformat:2 }}</td>
+                                <td class="text-end">Q{{ nomina.total_deducciones|floatformat:2 }}</td>
+                                <td class="text-end fw-bold">Q{{ nomina.total_pagar|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'nomina_empleado' nomina.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="info-section">
+            <h5 class="mb-4">Resumen de Nómina</h5>
+            
+            <div class="info-card">
+                <div class="total-label">Total Devengado</div>
+                <div class="total-value text-primary">Q{{ total_devengado|floatformat:2 }}</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="total-label">Total Deducciones</div>
+                <div class="total-value text-danger">Q{{ total_deducciones|floatformat:2 }}</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="total-label">Total a Pagar</div>
+                <div class="total-value text-success">Q{{ total_pagar|floatformat:2 }}</div>
+            </div>
+            
+            <div class="info-card">
+                <div class="info-title">Información General</div>
+                
+                <div class="mb-3">
+                    <div class="fw-bold mb-1">Período de la Nómina</div>
+                    <div>{{ primera_nomina.fecha_inicio }} al {{ primera_nomina.fecha_fin }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="fw-bold mb-1">Tipo de Nómina</div>
+                    <div>{{ tipo_nomina.nombre }}</div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="fw-bold mb-1">Fecha de Generación</div>
+                    <div>{{ fecha_generacion }}</div>
+                </div>
+                
+                <div>
+                    <div class="fw-bold mb-1">Total de Empleados</div>
+                    <div>{{ nominas.count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="action-buttons">
+    <div class="container">
+        <div class="d-flex justify-content-between">
+            <div>
+                <button class="btn btn-outline-danger">
+                    <i class="fas fa-trash-alt me-2"></i>Eliminar Nómina
+                </button>
+            </div>
+            <div>
+                <button class="btn btn-outline-success me-2">
+                    <i class="fas fa-file-pdf me-2"></i>Generar Reporte
+                </button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-paper-plane me-2"></i>Enviar por Correo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

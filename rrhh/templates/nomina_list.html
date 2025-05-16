@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Nóminas | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nomina-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .filter-section {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .card-nomina {
+        transition: transform 0.2s;
+    }
+    .card-nomina:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .badge-tipo {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+    .nomina-date {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .nomina-total {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nomina-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Gestión de Nóminas</h1>
+                <p class="lead">Genere y consulte las nóminas del personal</p>
+            </div>
+            <div>
+                <a href="{% url 'generar_nomina' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-2"></i>Generar Nueva Nómina
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="filter-section">
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <label for="{{ filtro_form.fecha_desde.id_for_label }}" class="form-label">{{ filtro_form.fecha_desde.label }}</label>
+            {{ filtro_form.fecha_desde }}
+        </div>
+        <div class="col-md-3">
+            <label for="{{ filtro_form.fecha_hasta.id_for_label }}" class="form-label">{{ filtro_form.fecha_hasta.label }}</label>
+            {{ filtro_form.fecha_hasta }}
+        </div>
+        <div class="col-md-3">
+            <label for="{{ filtro_form.tipo_nomina.id_for_label }}" class="form-label">{{ filtro_form.tipo_nomina.label }}</label>
+            {{ filtro_form.tipo_nomina }}
+        </div>
+        <div class="col-md-3">
+            <label for="{{ filtro_form.departamento.id_for_label }}" class="form-label">{{ filtro_form.departamento.label }}</label>
+            {{ filtro_form.departamento }}
+        </div>
+        <div class="col-12 d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-filter me-2"></i>Filtrar
+            </button>
+            <a href="{% url 'nomina_list' %}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-times me-2"></i>Limpiar
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="row">
+    {% for nomina in nominas %}
+        <div class="col-md-4 mb-4">
+            <div class="card card-nomina h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge {% if nomina.tipo_nomina.nombre == 'Mensual' %}bg-primary{% elif nomina.tipo_nomina.nombre == 'Quincenal' %}bg-success{% else %}bg-info{% endif %} badge-tipo">
+                            {{ nomina.tipo_nomina.nombre }}
+                        </span>
+                    </div>
+                    <div class="nomina-date">
+                        <i class="fas fa-calendar-alt me-1"></i> {{ nomina.fecha_generacion }}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Nómina {{ nomina.tipo_nomina.nombre }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">Período:</small><br>
+                        {{ nomina.fecha_inicio }} al {{ nomina.fecha_fin }}
+                    </p>
+                    <p class="card-text">
+                        <small class="text-muted">Cantidad de Empleados:</small><br>
+                        <span class="fw-bold">{{ nomina.count }} empleados</span>
+                    </p>
+                    <p class="card-text">
+                        <small class="text-muted">Total a Pagar:</small><br>
+                        <span class="nomina-total text-success">Q{{ nomina.total_pagar|floatformat:2 }}</span>
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'nomina_detalle' nomina.fecha_generacion|date:'Y-m-d' nomina.tipo_nomina.id %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-eye me-2"></i>Ver Detalle
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>No se encontraron nóminas. Puede generar una nueva nómina haciendo clic en el botón "Generar Nueva Nómina".
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Paginación -->
+{% if nominas.has_other_pages %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if nominas.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo_nomina %}&tipo_nomina={{ request.GET.tipo_nomina }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ nominas.previous_page_number }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo_nomina %}&tipo_nomina={{ request.GET.tipo_nomina }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-left"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                </li>
+            {% endif %}
+            
+            {% for i in nominas.paginator.page_range %}
+                {% if nominas.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% elif i > nominas.number|add:'-3' and i < nominas.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ i }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo_nomina %}&tipo_nomina={{ request.GET.tipo_nomina }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}">
+                            {{ i }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if nominas.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ nominas.next_page_number }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo_nomina %}&tipo_nomina={{ request.GET.tipo_nomina }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ nominas.paginator.num_pages }}{% if request.GET.fecha_desde %}&fecha_desde={{ request.GET.fecha_desde }}{% endif %}{% if request.GET.fecha_hasta %}&fecha_hasta={{ request.GET.fecha_hasta }}{% endif %}{% if request.GET.tipo_nomina %}&tipo_nomina={{ request.GET.tipo_nomina }}{% endif %}{% if request.GET.departamento %}&departamento={{ request.GET.departamento }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link"><i class="fas fa-angle-double-right"></i></span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}

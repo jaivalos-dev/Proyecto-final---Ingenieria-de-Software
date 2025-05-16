@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}Boleta de Pago | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nomina-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .boleta-card {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .empresa-info {
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    .empresa-nombre {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    .empresa-slogan {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+    .empresa-direccion {
+        font-size: 0.875rem;
+    }
+    .boleta-titulo {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .empleado-info {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px dashed #dee2e6;
+    }
+    .seccion-titulo {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #495057;
+    }
+    .detalles-nomina {
+        margin-bottom: 2rem;
+    }
+    .detalles-row {
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px dotted #dee2e6;
+    }
+    .detalles-row:last-child {
+        border-bottom: none;
+    }
+    .detalles-label {
+        font-weight: 600;
+    }
+    .detalles-valor {
+        text-align: right;
+    }
+    .totales {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.3rem;
+        margin-bottom: 2rem;
+    }
+    .total-row {
+        margin-bottom: 0.5rem;
+    }
+    .total-final {
+        font-size: 1.25rem;
+        font-weight: 700;
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+        border-top: 2px solid #dee2e6;
+    }
+    .firma-seccion {
+        margin-top: 3rem;
+        display: flex;
+        justify-content: space-between;
+    }
+    .firma {
+        width: 40%;
+        text-align: center;
+    }
+    .firma-linea {
+        margin-top: 3rem;
+        border-top: 1px solid #495057;
+        padding-top: 0.5rem;
+    }
+    .badge-tipo {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.65rem;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .boleta-card {
+            box-shadow: none;
+            padding: 0;
+        }
+        .nomina-header {
+            display: none;
+        }
+        body {
+            background-color: white !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nomina-header no-print">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Boleta de Pago</h1>
+                <p class="lead">{{ nomina.empleado.nombre }} {{ nomina.empleado.apellido }}</p>
+            </div>
+            <div>
+                <a href="{% url 'nomina_detalle' nomina.fecha_generacion|date:'Y-m-d' nomina.tipo_nomina.id %}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="fas fa-print me-2"></i>Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="boleta-card">
+    <div class="empresa-info">
+        <div class="empresa-nombre">EMPRESA EJEMPLO, S.A.</div>
+        <div class="empresa-slogan">Gestión de Recursos Humanos</div>
+        <div class="empresa-direccion">Ciudad de Guatemala, Guatemala</div>
+    </div>
+    
+    <div class="boleta-titulo">
+        <h3>BOLETA DE PAGO</h3>
+        <div>
+            <span class="badge {% if nomina.tipo_nomina.nombre == 'Mensual' %}bg-primary{% elif nomina.tipo_nomina.nombre == 'Quincenal' %}bg-success{% else %}bg-info{% endif %} badge-tipo">
+                Nómina {{ nomina.tipo_nomina.nombre }}
+            </span>
+        </div>
+        <div class="mt-2">Período: {{ nomina.fecha_inicio }} al {{ nomina.fecha_fin }}</div>
+    </div>
+    
+    <div class="empleado-info">
+        <div class="seccion-titulo">Información del Empleado</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Nombre:</strong></div>
+                    <div class="col-6">{{ nomina.empleado.nombre }} {{ nomina.empleado.apellido }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6"><strong>DPI:</strong></div>
+                    <div class="col-6">{{ nomina.empleado.dpi }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Fecha Ingreso:</strong></div>
+                    <div class="col-6">{{ nomina.empleado.fecha_ingreso }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Puesto:</strong></div>
+                    <div class="col-6">{{ nomina.empleado.puesto.nombre }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Departamento:</strong></div>
+                    <div class="col-6">{{ nomina.empleado.puesto.departamento.nombre }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-6"><strong>Fecha de Pago:</strong></div>
+                    <div class="col-6">{{ nomina.fecha_generacion }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="detalles-nomina">
+                <div class="seccion-titulo">Ingresos</div>
+                <div class="row detalles-row">
+                    <div class="col-7 detalles-label">Salario Base</div>
+                    <div class="col-5 detalles-valor">Q{{ salario_base|floatformat:2 }}</div>
+                </div>
+                <div class="row detalles-row">
+                    <div class="col-7 detalles-label">Bonificación Incentivo</div>
+                    <div class="col-5 detalles-valor">Q{{ bonificacion_incentivo|floatformat:2 }}</div>
+                </div>
+                {% if horas_extras > 0 %}
+                <div class="row detalles-row">
+                    <div class="col-7 detalles-label">Horas Extras ({{ horas_extras }} horas)</div>
+                    <div class="col-5 detalles-valor">Q{{ horas_extras_valor|floatformat:2 }}</div>
+                </div>
+                {% endif %}
+                <div class="row detalles-row">
+                    <div class="col-7 detalles-label">Otras Bonificaciones</div>
+                    <div class="col-5 detalles-valor">Q0.00</div>
+                </div>
+                <div class="row total-row">
+                    <div class="col-7 detalles-label">Total Devengado</div>
+                    <div class="col-5 detalles-valor"><strong>Q{{ nomina.total_devengado|floatformat:2 }}</strong></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="detalles-nomina">
+                <div class="seccion-titulo">Deducciones</div>
+                {% for deduccion in deducciones %}
+                <div class="row detalles-row">
+                    <div class="col-7 detalles-label">{{ deduccion.nombre }}</div>
+                    <div class="col-5 detalles-valor">Q{{ deduccion.monto|floatformat:2 }}</div>
+                </div>
+                {% empty %}
+                <div class="row detalles-row">
+                    <div class="col-12 text-center">No hay deducciones registradas</div>
+                </div>
+                {% endfor %}
+                <div class="row total-row">
+                    <div class="col-7 detalles-label">Total Deducciones</div>
+                    <div class="col-5 detalles-valor"><strong>Q{{ nomina.total_deducciones|floatformat:2 }}</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="totales">
+        <div class="row total-final">
+            <div class="col-9 detalles-label">LÍQUIDO A RECIBIR</div>
+            <div class="col-3 detalles-valor">Q{{ nomina.total_pagar|floatformat:2 }}</div>
+        </div>
+    </div>
+    
+    <div class="firma-seccion">
+        <div class="firma">
+            <div class="firma-linea">Firma del Empleado</div>
+        </div>
+        <div class="firma">
+            <div class="firma-linea">Recursos Humanos</div>
+        </div>
+    </div>
+    
+    <div class="mt-4 text-center">
+        <small class="text-muted">Este documento es una constancia de pago y no un cheque. El pago ha sido realizado a través de transferencia bancaria.</small>
+    </div>
+</div>
+{% endblock %}

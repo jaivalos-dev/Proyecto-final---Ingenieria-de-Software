@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load rrhh_filters %}
+
+
+{% block title %}Detalles de Nómina | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nomina-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .nomina-form {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .table-empleados th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 1;
+    }
+    .table-responsive {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    .input-group-text {
+        background-color: #e9ecef;
+        width: 40px;
+        justify-content: center;
+    }
+    .periodo-label {
+        background-color: #e9ecef;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nomina-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Detalles de la Nómina</h1>
+                <p class="lead">Ingrese los valores específicos para cada empleado</p>
+            </div>
+            <div>
+                <a href="{% url 'generar_nomina' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="nomina-form">
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="periodo-label">
+                <i class="fas fa-calendar-alt me-2"></i>Tipo: {{ tipo_nomina.nombre }}
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="periodo-label">
+                <i class="fas fa-calendar-check me-2"></i>Período: {{ fecha_inicio }} al {{ fecha_fin }}
+            </div>
+        </div>
+    </div>
+    
+    <form method="post" action="{% url 'procesar_nomina' %}">
+        {% csrf_token %}
+        
+        <input type="hidden" name="tipo_nomina" value="{{ tipo_nomina.id }}">
+        <input type="hidden" name="fecha_inicio" value="{{ fecha_inicio|date:'Y-m-d' }}">
+        <input type="hidden" name="fecha_fin" value="{{ fecha_fin|date:'Y-m-d' }}">
+        {% if departamento %}
+            <input type="hidden" name="departamento" value="{{ departamento.id }}">
+        {% endif %}
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-empleados">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Empleado</th>
+                        <th>Puesto</th>
+                        <th>Salario Base</th>
+                        <th>Horas Extras</th>
+                        <th>Bonificaciones</th>
+                        <th>Deducciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form in formset %}
+                        {% for hidden_field in form.hidden_fields %}
+                            {{ hidden_field }}
+                        {% endfor %}
+                        
+                        {% with empleado=empleados|get_item:forloop.counter0 %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <span class="fw-bold">{{ empleado.nombre }} {{ empleado.apellido }}</span><br>
+                                        <small class="text-muted">{{ empleado.dpi }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span>{{ empleado.puesto.nombre }}</span><br>
+                                <small class="text-muted">{{ empleado.puesto.departamento.nombre }}</small>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Q</span>
+                                    <input type="text" class="form-control" value="{{ empleado.puesto.salario_base }}" readonly>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    {{ form.horas_extras }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text">Q</span>
+                                    {{ form.bonificaciones_adicionales }}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">Q</span>
+                                            {{ form.deducciones_adicionales }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-group input-group-sm">
+                                            {{ form.motivo_deduccion }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {{ formset.management_form }}
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <a href="{% url 'generar_nomina' %}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-check-circle me-2"></i>Generar Nómina
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card mt-4 mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Información Importante</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Cálculos automáticos:</h6>
+                <ul>
+                    <li><strong>IGSS (4.83%):</strong> Se calcula sobre el salario base más horas extras.</li>
+                    <li><strong>ISR:</strong> Se calcula según escala de impuestos para rentas de trabajo.</li>
+                    <li><strong>Bonificación Incentivo:</strong> Q250.00 mensuales (proporcional según tipo de nómina).</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Campos adicionales:</h6>
+                <ul>
+                    <li><strong>Horas Extras:</strong> Cantidad de horas extras trabajadas en el período.</li>
+                    <li><strong>Bonificaciones:</strong> Bonificaciones adicionales (aparte del incentivo).</li>
+                    <li><strong>Deducciones:</strong> Descuentos adicionales (aparte de IGSS e ISR).</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Función para filtrar el template
+    function addGetItemFilter() {
+        if (typeof window.django === 'undefined') {
+            window.django = {};
+        }
+        if (typeof window.django.jinja2 === 'undefined') {
+            window.django.jinja2 = {};
+        }
+        window.django.jinja2.filters = {
+            get_item: function(arr, index) {
+                return arr[index];
+            }
+        };
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Implementar filtro para acceder a elementos por índice
+        addGetItemFilter();
+    });
+</script>
+{% endblock %}
