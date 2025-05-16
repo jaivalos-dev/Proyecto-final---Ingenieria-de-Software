@@ -11,8 +11,8 @@ urlpatterns = [
     
     # Empleados URLs
     path('empleados/', views.empleados_list, name='empleados_list'),
-    path('empleados/nuevo/', views.empleado_nuevo, name='empleado_nuevo'),
-    path('empleados/<int:pk>/', views.empleado_detalle, name='empleado_detalle'),
-    path('empleados/<int:pk>/editar/', views.empleado_editar, name='empleado_editar'),
-    path('empleados/<int:pk>/eliminar/', views.empleado_eliminar, name='empleado_eliminar'),
+    path('empleado/nuevo/', views.empleado_nuevo, name='empleado_nuevo'),
+    path('empleado/editar/<int:pk>/', views.empleado_editar, name='empleado_editar'),
+    path('empleado/<int:pk>/', views.empleado_detalle, name='empleado_detalle'),
+    path('empleado/eliminar/<int:pk>/', views.empleado_eliminar, name='empleado_eliminar'),
 ]

@@ -222,7 +222,7 @@ def empleado_eliminar(request, pk):
     
     if request.method == 'POST':
         # En lugar de eliminar, marcamos como inactivo o de baja
-        estado_baja = Estado.objects.get(nombre='De baja')
+        estado_baja = Estado.objects.get(nombre__iexact="Baja")
         empleado.estado = estado_baja
         empleado.fecha_baja = timezone.now().date()
         empleado.save()
@@ -231,3 +231,4 @@ def empleado_eliminar(request, pk):
         return redirect('empleados_list')
     
     return redirect('empleados_list')
+

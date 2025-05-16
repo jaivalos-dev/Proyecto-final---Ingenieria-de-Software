@@ -43,3 +43,14 @@ class EmpleadoForm(forms.ModelForm):
                 raise forms.ValidationError('Ya existe un empleado con este DPI')
         
         return dpi
+    
+#Incorporacion de nuevos campos dentro de formulario Empleado
+class EmpleadoForm(forms.ModelForm):
+    class Meta:
+        model = Empleado
+        fields = '__all__'
+        widgets = {
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
+            'fecha_ingreso': forms.DateInput(attrs={'type': 'date'}),
+            'fecha_baja': forms.DateInput(attrs={'type': 'date'}),
+        }
