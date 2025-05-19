@@ -80,6 +80,24 @@
                     <label for="{{ form.apellido.id_for_label }}" class="form-label">{{ form.apellido.label }}</label>
                     {{ form.apellido }}
                 </div>
+                {# Añadir al final de la sección "Información Personal" en empleado_form.html #}
+                <div class="form-section">
+                    <h4 class="form-section-title">Acceso al Sistema (Opcional)</h4>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="id_crear_usuario" name="crear_usuario" {% if form.crear_usuario.value %}checked{% endif %}>
+                        <label class="form-check-label" for="id_crear_usuario">
+                            Crear cuenta de usuario para este empleado
+                        </label>
+                    </div>
+                    
+                    <div id="usuario-fields" class="{% if not form.crear_usuario.value %}d-none{% endif %}">
+                        <div class="mb-3">
+                            <label for="id_password" class="form-label">Contraseña</label>
+                            <input type="password" name="password" id="id_password" class="form-control" {% if form.crear_usuario.value %}required{% endif %}>
+                            <div class="form-text">Mínimo 8 caracteres. Una contraseña segura debe incluir letras, números y símbolos.</div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="row">
@@ -114,18 +132,35 @@
             </div>
         </div>
         
+        <!-- Información Laboral-->
         <div class="form-section">
             <h4 class="form-section-title">Información Laboral</h4>
             <div class="row">
                 <div class="col-md-6 mb-3">
-                    <label for="{{ form.puesto.id_for_label }}" class="form-label">{{ form.puesto.label }}</label>
+                    <label for="id_puesto_select" class="form-label">{{ form.puesto.label }}</label>
                     {{ form.puesto }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="id_salario_info" class="form-label">Salario Base</label>
+                    <div class="input-group">
+                        <span class="input-group-text">Q</span>
+                        <input type="text" id="id_salario_info" class="form-control" readonly>
+                    </div>
+                    <small class="form-text text-muted">El salario base está definido por el puesto seleccionado.</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.fecha_ingreso.id_for_label }}" class="form-label">{{ form.fecha_ingreso.label }}</label>
+                    {{ form.fecha_ingreso }}
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.estado.id_for_label }}" class="form-label">{{ form.estado.label }}</label>
                     {{ form.estado }}
                 </div>
             </div>
+        </div>
             
             <div class="row">
                 <div class="col-md-6 mb-3">
@@ -143,4 +178,63 @@
         </div>
     </form>
 </div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const crearUsuarioCheckbox = document.getElementById('id_crear_usuario');
+        const usuarioFields = document.getElementById('usuario-fields');
+        const passwordField = document.getElementById('id_password');
+        
+        crearUsuarioCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                usuarioFields.classList.remove('d-none');
+                passwordField.setAttribute('required', 'required');
+            } else {
+                usuarioFields.classList.add('d-none');
+                passwordField.removeAttribute('required');
+            }
+        });
+
+        // Actualizar el salario cuando cambia el puesto
+        const puestoSelect = document.getElementById('id_puesto_select');
+        const salarioInfo = document.getElementById('id_salario_info');
+
+       // Función para cargar el salario del puesto seleccionado
+        function cargarSalario() {
+            const puestoId = puestoSelect.value;
+            if (puestoId) {
+                // Usar fetch para obtener el salario del puesto
+                fetch(`/api/puestos/${puestoId}/salario/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error al obtener datos del puesto');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Mostrar el salario con formato
+                        salarioInfo.value = data.salario_base.toFixed(2);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        salarioInfo.value = 'Error al cargar';
+                    });
+            } else {
+                salarioInfo.value = '';
+            }
+        }
+        
+        // Agregar evento para detectar cambios en el puesto
+        if (puestoSelect) {
+            puestoSelect.addEventListener('change', cargarSalario);
+            
+            // Cargar salario inicial si hay un puesto seleccionado
+            if (puestoSelect.value) {
+                cargarSalario();
+            }
+        }
+    });
+</script>
+{% endblock %}
 {% endblock %}

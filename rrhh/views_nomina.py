@@ -151,6 +151,13 @@ def procesar_nomina(request):
             fecha_generacion = timezone.now().date()
             nominas_creadas = []
             
+            # Factor para calcular la bonificación según el tipo de nómina
+            factor_bonificacion = 1.0  # Mensual por defecto
+            if tipo_nomina.nombre == 'Quincenal':
+                factor_bonificacion = 0.5
+            elif tipo_nomina.nombre == 'Semanal':
+                factor_bonificacion = 0.23  # Aproximado para 4.33 semanas por mes
+            
             for form in formset:
                 if form.is_valid():
                     # Obtener datos del empleado
@@ -163,35 +170,57 @@ def procesar_nomina(request):
                     deducciones_adicionales = form.cleaned_data.get('deducciones_adicionales') or 0
                     motivo_deduccion = form.cleaned_data.get('motivo_deduccion') or ''
                     
-                    # Calcular la nómina según el tipo (usar funciones de PostgreSQL)
-                    salario_base = empleado.puesto.salario_base
-                    bonificacion_incentivo = decimal.Decimal('250.00')  # Por ley en Guatemala
+                    # CÁLCULOS DE LA NÓMINA
                     
-                    # Calcular el valor de horas extras (1.5 veces el valor normal)
-                    valor_hora = salario_base / 30 / 8  # Salario diario / 8 horas
+                    # 1. Salario base según el tipo de nómina
+                    salario_base = empleado.puesto.salario_base
+                    if tipo_nomina.nombre == 'Quincenal':
+                        salario_base = salario_base / 2
+                    elif tipo_nomina.nombre == 'Semanal':
+                        salario_base = salario_base / 4.33  # 4.33 semanas promedio por mes
+                    
+                    # 2. Bonificación incentivo (ley de Guatemala: Q250.00 mensual)
+                    bonificacion_incentivo = decimal.Decimal('250.00') * factor_bonificacion
+                    
+                    # 3. Cálculo de horas extras
+                    # Salario diario = Salario mensual / días del mes
+                    # Salario por hora = Salario diario / 8 horas
+                    # Valor hora extra = Salario por hora * 1.5
+                    valor_hora = salario_base / 30 / 8 if tipo_nomina.nombre == 'Mensual' else \
+                                salario_base / 15 / 8 if tipo_nomina.nombre == 'Quincenal' else \
+                                salario_base / 7 / 8  # Semanal
+                    
                     monto_horas_extras = valor_hora * decimal.Decimal('1.5') * horas_extras
                     
-                    # Total devengado
+                    # 4. Total devengado
                     total_devengado = salario_base + bonificacion_incentivo + monto_horas_extras + bonificaciones_adicionales
                     
-                    # Calcular deducciones
+                    # 5. Deducciones
+                    
                     # IGSS (4.83% sobre el salario base y horas extras, no sobre bonificaciones)
                     base_igss = salario_base + monto_horas_extras
                     igss = round(base_igss * decimal.Decimal('0.0483'), 2)
                     
-                    # ISR (depende del salario anual)
-                    salario_anual = salario_base * 12
+                    # ISR (depende del salario anual, proyectado a partir del salario mensual)
+                    salario_mensual_proyectado = empleado.puesto.salario_base
+                    salario_anual = salario_mensual_proyectado * 12
                     isr_mensual = 0
                     
                     if salario_anual > 300000:
                         # 5% sobre el excedente de Q300,000
                         isr_anual = (salario_anual - 300000) * decimal.Decimal('0.05')
                         isr_mensual = round(isr_anual / 12, 2)
+                        
+                        # Ajustar según tipo de nómina
+                        if tipo_nomina.nombre == 'Quincenal':
+                            isr_mensual = isr_mensual / 2
+                        elif tipo_nomina.nombre == 'Semanal':
+                            isr_mensual = isr_mensual / 4.33
                     
-                    # Total deducciones
+                    # 6. Total deducciones
                     total_deducciones = igss + isr_mensual + deducciones_adicionales
                     
-                    # Total a pagar
+                    # 7. Total a pagar
                     total_pagar = total_devengado - total_deducciones
                     
                     # Crear la nómina
@@ -210,14 +239,14 @@ def procesar_nomina(request):
                     if igss > 0:
                         Deduccion.objects.create(
                             nomina=nomina,
-                            nombre="IGSS",
+                            nombre="IGSS (4.83%)",
                             monto=igss
                         )
                     
                     if isr_mensual > 0:
                         Deduccion.objects.create(
                             nomina=nomina,
-                            nombre="ISR",
+                            nombre="ISR (5%)",
                             monto=isr_mensual
                         )
                     

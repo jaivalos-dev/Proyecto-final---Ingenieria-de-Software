@@ -181,9 +181,10 @@
                 <h5 class="mb-0">Accesos Rápidos</h5>
             </div>
             <div class="card-body">
+                {# Modificar los enlaces de accesos rápidos en dashboard.html #}
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-primary w-100 py-3">
+                        <a href="{% url 'empleado_nuevo' %}" class="btn btn-primary w-100 py-3">
                             <i class="fas fa-user-plus me-2"></i>Nuevo Empleado
                         </a>
                     </div>
@@ -193,13 +194,13 @@
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-warning w-100 py-3">
-                            <i class="fas fa-file-invoice-dollar me-2"></i>Reportes
+                        <a href="{% url 'empleados_list' %}" class="btn btn-warning w-100 py-3">
+                            <i class="fas fa-users me-2"></i>Empleados
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-info w-100 py-3">
-                            <i class="fas fa-chart-bar me-2"></i>Indicadores
+                        <a href="{% url 'nomina_list' %}" class="btn btn-info w-100 py-3">
+                            <i class="fas fa-file-invoice-dollar me-2"></i>Nóminas
                         </a>
                     </div>
                 </div>

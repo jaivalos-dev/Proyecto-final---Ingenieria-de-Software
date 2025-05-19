@@ -23,4 +23,6 @@ urlpatterns = [
     path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/', views_nomina.nomina_detalle, name='nomina_detalle'),
     path('nominas/empleado/<int:nomina_id>/', views_nomina.nomina_empleado, name='nomina_empleado'),
 
+    path('api/puestos/<int:pk>/salario/', views.puesto_salario, name='puesto_salario'),
+
 ]

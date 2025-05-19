@@ -4,10 +4,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum, Q
-from .models import Empleado, Departamento, Nomina, IndicadorProductividad, Rol, Usuario, Estado
+from .models import Empleado, Departamento, Nomina, IndicadorProductividad, Rol, Usuario, Estado, Puesto
 from .forms import EmpleadoForm
 from django.utils import timezone
 import datetime
+from django.http import JsonResponse
 
 def dashboard(request):
     """Vista para el dashboard principal del sistema"""
@@ -171,11 +172,19 @@ def empleado_nuevo(request):
     if request.method == 'POST':
         form = EmpleadoForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Empleado creado exitosamente.')
-            return redirect('empleados_list')
+            # Guardar el empleado
+            empleado = form.save()
+            messages.success(request, f'Empleado {empleado.nombre} {empleado.apellido} creado exitosamente.')
+            
+            # Redireccionar a la lista o al detalle
+            return redirect('empleado_detalle', pk=empleado.pk)
     else:
-        form = EmpleadoForm()
+        # Inicializar con estado 'Activo' por defecto
+        try:
+            estado_activo = Estado.objects.get(nombre='Activo')
+            form = EmpleadoForm(initial={'estado': estado_activo})
+        except Estado.DoesNotExist:
+            form = EmpleadoForm()
     
     return render(request, 'empleado_form.html', {
         'form': form,
@@ -212,7 +221,24 @@ def empleado_editar(request, pk):
 def empleado_detalle(request, pk):
     """Vista para ver los detalles de un empleado"""
     empleado = get_object_or_404(Empleado, pk=pk)
-    return render(request, 'empleado_detalle.html', {'empleado': empleado})
+    
+    # Obtener las nóminas ordenadas por fecha más reciente
+    nominas = empleado.nominas.all().order_by('-fecha_generacion')[:5]
+    
+    # Obtener prestaciones ordenadas por fecha más reciente
+    prestaciones = empleado.prestaciones.all().order_by('-fecha_prestacion')
+    
+    # Obtener indicadores de productividad ordenados por fecha más reciente
+    indicadores = empleado.indicadores.all().order_by('-fecha_registro')
+    
+    context = {
+        'empleado': empleado,
+        'nominas': nominas,
+        'prestaciones': prestaciones,
+        'indicadores': indicadores
+    }
+    
+    return render(request, 'empleado_detalle.html', context)
 
 
 @login_required
@@ -231,3 +257,16 @@ def empleado_eliminar(request, pk):
         return redirect('empleados_list')
     
     return redirect('empleados_list')
+
+@login_required
+def puesto_salario(request, pk):
+    """API simple para obtener el salario de un puesto"""
+    try:
+        puesto = Puesto.objects.get(pk=pk)
+        return JsonResponse({
+            'salario_base': float(puesto.salario_base),
+            'puesto_nombre': puesto.nombre,
+            'departamento': puesto.departamento.nombre
+        })
+    except Puesto.DoesNotExist:
+        return JsonResponse({'error': 'Puesto no encontrado'}, status=404)
