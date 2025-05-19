@@ -8,6 +8,7 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse
 import decimal
 import datetime
+from .utils import generar_reporte_nomina
 
 from .models import Empleado, Nomina, Deduccion, TipoNomina, Departamento, Estado, Puesto
 from .forms_nomina import GenerarNominaForm, EmpleadoNominaFormSet, FiltroNominaForm
@@ -152,11 +153,12 @@ def procesar_nomina(request):
             nominas_creadas = []
             
             # Factor para calcular la bonificación según el tipo de nómina
-            factor_bonificacion = 1.0  # Mensual por defecto
+            # Asegurarse de usar Decimal en lugar de float
+            factor_bonificacion = decimal.Decimal('1.0')  # Mensual por defecto
             if tipo_nomina.nombre == 'Quincenal':
-                factor_bonificacion = 0.5
+                factor_bonificacion = decimal.Decimal('0.5')
             elif tipo_nomina.nombre == 'Semanal':
-                factor_bonificacion = 0.23  # Aproximado para 4.33 semanas por mes
+                factor_bonificacion = decimal.Decimal('0.23')  # Aproximado para 4.33 semanas por mes
             
             for form in formset:
                 if form.is_valid():
@@ -170,25 +172,34 @@ def procesar_nomina(request):
                     deducciones_adicionales = form.cleaned_data.get('deducciones_adicionales') or 0
                     motivo_deduccion = form.cleaned_data.get('motivo_deduccion') or ''
                     
+                    # Convertir a Decimal si no lo son ya
+                    if not isinstance(horas_extras, decimal.Decimal):
+                        horas_extras = decimal.Decimal(str(horas_extras))
+                    if not isinstance(bonificaciones_adicionales, decimal.Decimal):
+                        bonificaciones_adicionales = decimal.Decimal(str(bonificaciones_adicionales))
+                    if not isinstance(deducciones_adicionales, decimal.Decimal):
+                        deducciones_adicionales = decimal.Decimal(str(deducciones_adicionales))
+                    
                     # CÁLCULOS DE LA NÓMINA
                     
                     # 1. Salario base según el tipo de nómina
                     salario_base = empleado.puesto.salario_base
                     if tipo_nomina.nombre == 'Quincenal':
-                        salario_base = salario_base / 2
+                        salario_base = salario_base / decimal.Decimal('2')
                     elif tipo_nomina.nombre == 'Semanal':
-                        salario_base = salario_base / 4.33  # 4.33 semanas promedio por mes
+                        salario_base = salario_base / decimal.Decimal('4.33')  # 4.33 semanas promedio por mes
                     
                     # 2. Bonificación incentivo (ley de Guatemala: Q250.00 mensual)
                     bonificacion_incentivo = decimal.Decimal('250.00') * factor_bonificacion
                     
                     # 3. Cálculo de horas extras
-                    # Salario diario = Salario mensual / días del mes
-                    # Salario por hora = Salario diario / 8 horas
-                    # Valor hora extra = Salario por hora * 1.5
-                    valor_hora = salario_base / 30 / 8 if tipo_nomina.nombre == 'Mensual' else \
-                                salario_base / 15 / 8 if tipo_nomina.nombre == 'Quincenal' else \
-                                salario_base / 7 / 8  # Semanal
+                    # Usar Decimal para divisiones
+                    if tipo_nomina.nombre == 'Mensual':
+                        valor_hora = salario_base / decimal.Decimal('30') / decimal.Decimal('8')
+                    elif tipo_nomina.nombre == 'Quincenal':
+                        valor_hora = salario_base / decimal.Decimal('15') / decimal.Decimal('8')
+                    else:  # Semanal
+                        valor_hora = salario_base / decimal.Decimal('7') / decimal.Decimal('8')
                     
                     monto_horas_extras = valor_hora * decimal.Decimal('1.5') * horas_extras
                     
@@ -199,23 +210,23 @@ def procesar_nomina(request):
                     
                     # IGSS (4.83% sobre el salario base y horas extras, no sobre bonificaciones)
                     base_igss = salario_base + monto_horas_extras
-                    igss = round(base_igss * decimal.Decimal('0.0483'), 2)
+                    igss = round(salario_base * decimal.Decimal('0.0483'), 2)
                     
                     # ISR (depende del salario anual, proyectado a partir del salario mensual)
                     salario_mensual_proyectado = empleado.puesto.salario_base
-                    salario_anual = salario_mensual_proyectado * 12
-                    isr_mensual = 0
+                    salario_anual = salario_mensual_proyectado * decimal.Decimal('12')
+                    isr_mensual = round(salario_base * decimal.Decimal('0.05'), 2)
                     
-                    if salario_anual > 300000:
-                        # 5% sobre el excedente de Q300,000
-                        isr_anual = (salario_anual - 300000) * decimal.Decimal('0.05')
-                        isr_mensual = round(isr_anual / 12, 2)
+                    # if salario_anual > decimal.Decimal('300000'):
+                    #     # 5% sobre el excedente de Q300,000
+                    #     isr_anual = (salario_anual - decimal.Decimal('300000')) * decimal.Decimal('0.05')
+                    #     isr_mensual = round(isr_anual / decimal.Decimal('12'), 2)
                         
-                        # Ajustar según tipo de nómina
-                        if tipo_nomina.nombre == 'Quincenal':
-                            isr_mensual = isr_mensual / 2
-                        elif tipo_nomina.nombre == 'Semanal':
-                            isr_mensual = isr_mensual / 4.33
+                    #     # Ajustar según tipo de nómina
+                    #     if tipo_nomina.nombre == 'Quincenal':
+                    #         isr_mensual = isr_mensual / decimal.Decimal('2')
+                    #     elif tipo_nomina.nombre == 'Semanal':
+                    #         isr_mensual = isr_mensual / decimal.Decimal('4.33')
                     
                     # 6. Total deducciones
                     total_deducciones = igss + isr_mensual + deducciones_adicionales
@@ -294,6 +305,24 @@ def nomina_detalle(request, fecha_generacion, tipo_nomina_id):
     total_deducciones = nominas.aggregate(total=Sum('total_deducciones'))['total'] or 0
     total_pagar = nominas.aggregate(total=Sum('total_pagar'))['total'] or 0
     
+    # Obtener deducciones agrupadas por tipo
+    deducciones_igss = Deduccion.objects.filter(nomina__in=nominas, nombre__icontains='IGSS').aggregate(total=Sum('monto'))['total'] or 0
+    deducciones_isr = Deduccion.objects.filter(nomina__in=nominas, nombre__icontains='ISR').aggregate(total=Sum('monto'))['total'] or 0
+    deducciones_otras = Deduccion.objects.filter(nomina__in=nominas).exclude(nombre__icontains='IGSS').exclude(nombre__icontains='ISR').aggregate(total=Sum('monto'))['total'] or 0
+    
+    # Agrupar por departamento para estadísticas
+    departamentos = {}
+    for nomina in nominas:
+        depto = nomina.empleado.puesto.departamento
+        if depto.id not in departamentos:
+            departamentos[depto.id] = {
+                'nombre': depto.nombre,
+                'empleados': 0,
+                'total': 0
+            }
+        departamentos[depto.id]['empleados'] += 1
+        departamentos[depto.id]['total'] += nomina.total_pagar
+    
     context = {
         'nominas': nominas,
         'primera_nomina': primera_nomina,
@@ -302,6 +331,11 @@ def nomina_detalle(request, fecha_generacion, tipo_nomina_id):
         'total_devengado': total_devengado,
         'total_deducciones': total_deducciones,
         'total_pagar': total_pagar,
+        'deducciones_igss': deducciones_igss,
+        'deducciones_isr': deducciones_isr,
+        'deducciones_otras': deducciones_otras,
+        'departamentos': departamentos.values(),
+        'isr_mensual': deducciones_isr,
     }
     
     return render(request, 'nomina_detalle.html', context)
@@ -310,19 +344,67 @@ def nomina_detalle(request, fecha_generacion, tipo_nomina_id):
 def nomina_empleado(request, nomina_id):
     """Vista para ver el detalle de una nómina de un empleado específico"""
     nomina = get_object_or_404(Nomina, id=nomina_id)
+    
+    # Obtener las deducciones
     deducciones = Deduccion.objects.filter(nomina=nomina)
     
     # Calcular desglose del salario
     salario_base = nomina.empleado.puesto.salario_base
-    bonificacion_incentivo = decimal.Decimal('250.00')  # Fijo por ley
     
-    # Calcular horas extras (si existen)
-    horas_extras_valor = nomina.total_devengado - salario_base - bonificacion_incentivo
-    horas_extras = 0
+    # Ajustar salario base según tipo de nómina
+    if nomina.tipo_nomina.nombre == 'Quincenal':
+        salario_base = salario_base / decimal.Decimal('2')
+    elif nomina.tipo_nomina.nombre == 'Semanal':
+        salario_base = salario_base / decimal.Decimal('4.33')
     
-    if horas_extras_valor > 0:
-        valor_hora = salario_base / 30 / 8
-        horas_extras = round(horas_extras_valor / (valor_hora * decimal.Decimal('1.5')), 2)
+    # Bonificación incentivo (ley de Guatemala: Q250.00 mensual)
+    bonificacion_incentivo = decimal.Decimal('250.00')
+    if nomina.tipo_nomina.nombre == 'Quincenal':
+        bonificacion_incentivo = decimal.Decimal('250.00') / decimal.Decimal('2')
+    elif nomina.tipo_nomina.nombre == 'Semanal':
+        bonificacion_incentivo = decimal.Decimal('250.00') / decimal.Decimal('4.33')
+    
+    # Calcular otras bonificaciones (lo que no es salario base ni bonificación incentivo ni horas extras)
+    total_sin_horas_extras = salario_base + bonificacion_incentivo
+    horas_extras_valor = decimal.Decimal('0')
+    
+    # Si el total devengado es mayor que salario + bonificación, la diferencia son horas extras u otras bonificaciones
+    if nomina.total_devengado > total_sin_horas_extras:
+        diferencia = nomina.total_devengado - total_sin_horas_extras
+        
+        # Calcular el valor de la hora según tipo de nómina
+        if nomina.tipo_nomina.nombre == 'Mensual':
+            valor_hora = salario_base / decimal.Decimal('30') / decimal.Decimal('8')
+        elif nomina.tipo_nomina.nombre == 'Quincenal':
+            valor_hora = salario_base / decimal.Decimal('15') / decimal.Decimal('8')
+        else:  # Semanal
+            valor_hora = salario_base / decimal.Decimal('7') / decimal.Decimal('8')
+        
+        # Buscar si hay deducciones adicionales
+        otras_bonificaciones = decimal.Decimal('0')
+        
+        # Calcular horas extras y otras bonificaciones
+        # Verificamos si la diferencia es mayor a cero
+        if diferencia > decimal.Decimal('0'):
+            # Valor de hora extra
+            valor_hora_extra = valor_hora * decimal.Decimal('1.5')
+            
+            # Obtenemos las horas extras del formulario original usando el registro en Deduccion
+            # En este caso lo calculamos basado en el total devengado
+            horas_extras = round(diferencia / valor_hora_extra, 2)  # Redondeamos a 2 decimales
+            horas_extras_valor = diferencia
+            otras_bonificaciones = decimal.Decimal('0')
+        else:
+            horas_extras = decimal.Decimal('0')
+            horas_extras_valor = decimal.Decimal('0')
+    else:
+        horas_extras = decimal.Decimal('0')
+        horas_extras_valor = decimal.Decimal('0')
+        otras_bonificaciones = decimal.Decimal('0')
+    
+    # Calcular deducciones
+    igss = round(salario_base * decimal.Decimal('0.0483'), 2)  # IGSS solo se calcula sobre el salario base
+    isr_mensual = round(salario_base * decimal.Decimal('0.05'), 2)
     
     context = {
         'nomina': nomina,
@@ -331,6 +413,82 @@ def nomina_empleado(request, nomina_id):
         'bonificacion_incentivo': bonificacion_incentivo,
         'horas_extras': horas_extras,
         'horas_extras_valor': horas_extras_valor,
+        'otras_bonificaciones': otras_bonificaciones,
+        'igss': igss,
+        'isr_mensual': isr_mensual,
     }
     
     return render(request, 'nomina_empleado.html', context)
+
+@login_required
+@transaction.atomic
+def eliminar_nomina(request, fecha_generacion, tipo_nomina_id):
+    """Vista para eliminar todas las nóminas de una fecha y tipo específicos"""
+    if request.method == 'POST':
+        # Convertir fecha_generacion a objeto date
+        fecha_generacion = datetime.datetime.strptime(fecha_generacion, "%Y-%m-%d").date()
+        
+        # Obtener tipo de nómina
+        tipo_nomina = get_object_or_404(TipoNomina, id=tipo_nomina_id)
+        
+        # Buscar todas las nóminas que coincidan con la fecha y tipo
+        nominas = Nomina.objects.filter(
+            fecha_generacion=fecha_generacion,
+            tipo_nomina=tipo_nomina
+        )
+        
+        if not nominas.exists():
+            messages.error(request, "No se encontraron nóminas para eliminar.")
+            return redirect('nomina_list')
+        
+        # Contar cuántas nóminas se eliminarán
+        count = nominas.count()
+        
+        # Eliminar todas las deducciones asociadas y luego las nóminas
+        for nomina in nominas:
+            Deduccion.objects.filter(nomina=nomina).delete()
+        
+        nominas.delete()
+        
+        messages.success(request, f"Se han eliminado {count} nóminas correctamente.")
+    
+    return redirect('nomina_list')
+
+@login_required
+def generar_reporte_nomina_pdf(request, fecha_generacion, tipo_nomina_id):
+    """Vista para generar un reporte PDF de la nómina"""
+    # Convertir fecha_generacion a objeto date
+    fecha_generacion = datetime.datetime.strptime(fecha_generacion, "%Y-%m-%d").date()
+    
+    # Obtener tipo de nómina
+    tipo_nomina = get_object_or_404(TipoNomina, id=tipo_nomina_id)
+    
+    # Obtener todas las nóminas de esa fecha y tipo
+    nominas = Nomina.objects.filter(
+        fecha_generacion=fecha_generacion,
+        tipo_nomina=tipo_nomina
+    ).select_related('empleado', 'empleado__puesto', 'empleado__puesto__departamento')
+    
+    if not nominas.exists():
+        messages.error(request, "No se encontró la nómina solicitada.")
+        return redirect('nomina_list')
+    
+    # Obtener fecha de inicio y fin (todas las nóminas tienen la misma)
+    primera_nomina = nominas.first()
+    fecha_inicio = primera_nomina.fecha_inicio
+    fecha_fin = primera_nomina.fecha_fin
+    
+    # Generar el PDF
+    pdf_buffer = generar_reporte_nomina(
+        nominas, 
+        tipo_nomina, 
+        fecha_inicio, 
+        fecha_fin, 
+        fecha_generacion
+    )
+    
+    # Crear la respuesta HTTP con el PDF
+    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="nomina_{tipo_nomina.nombre}_{fecha_generacion}.pdf"'
+    
+    return response

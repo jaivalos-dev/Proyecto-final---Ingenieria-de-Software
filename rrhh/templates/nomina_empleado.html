@@ -220,18 +220,20 @@
             </div>
         </div>
         
-        <div class="col-md-6">
+       <div class="col-md-6">
             <div class="detalles-nomina">
                 <div class="seccion-titulo">Deducciones</div>
+                <div class="row detalles-row">
+                    <div class="col-7 detalles-label">IGSS (4.83%)</div>
+                    <div class="col-5 detalles-valor">Q{{ igss|floatformat:2 }}</div>
+                </div>
                 {% for deduccion in deducciones %}
-                <div class="row detalles-row">
-                    <div class="col-7 detalles-label">{{ deduccion.nombre }}</div>
-                    <div class="col-5 detalles-valor">Q{{ deduccion.monto|floatformat:2 }}</div>
-                </div>
-                {% empty %}
-                <div class="row detalles-row">
-                    <div class="col-12 text-center">No hay deducciones registradas</div>
-                </div>
+                    {% if not 'IGSS' in deduccion.nombre %}
+                        <div class="row detalles-row">
+                            <div class="col-7 detalles-label">{{ deduccion.nombre }}</div>
+                            <div class="col-5 detalles-valor">Q{{ deduccion.monto|floatformat:2 }}</div>
+                        </div>
+                    {% endif %}
                 {% endfor %}
                 <div class="row total-row">
                     <div class="col-7 detalles-label">Total Deducciones</div>

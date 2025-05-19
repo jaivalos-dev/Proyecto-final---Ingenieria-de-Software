@@ -190,6 +190,45 @@
                     <div>{{ nominas.count }}</div>
                 </div>
             </div>
+
+            <div class="info-card">
+                <div class="info-title">Desglose de Deducciones</div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>IGSS (4.83%)</div>
+                        <div class="fw-bold">Q{{ deducciones_igss|floatformat:2 }}</div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>ISR</div>
+                        <div class="fw-bold">Q{{ deducciones_isr|floatformat:2 }}</div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>Otras deducciones</div>
+                        <div class="fw-bold">Q{{ deducciones_otras|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title">Distribución por Departamento</div>
+                
+                {% for depto in departamentos %}
+                    <div class="mb-3">
+                        <div class="fw-bold mb-1">{{ depto.nombre }}</div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <div>Empleados:</div>
+                            <div>{{ depto.empleados }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <div>Total a pagar:</div>
+                            <div class="fw-bold">Q{{ depto.total|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>            
+            
         </div>
     </div>
 </div>
@@ -198,17 +237,41 @@
     <div class="container">
         <div class="d-flex justify-content-between">
             <div>
-                <button class="btn btn-outline-danger">
+                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarNominaModal">
                     <i class="fas fa-trash-alt me-2"></i>Eliminar Nómina
                 </button>
             </div>
             <div>
-                <button class="btn btn-outline-success me-2">
+                <a href="{% url 'generar_reporte_nomina_pdf' fecha_generacion|date:'Y-m-d' tipo_nomina.id %}" class="btn btn-outline-success me-2">
                     <i class="fas fa-file-pdf me-2"></i>Generar Reporte
-                </button>
+                </a>
                 <button class="btn btn-primary">
                     <i class="fas fa-paper-plane me-2"></i>Enviar por Correo
                 </button>
+            </div>
+        </div>
+    </div>
+</div>  
+<div class="modal fade" id="eliminarNominaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea eliminar esta nómina?</p>
+                <p><strong>Tipo:</strong> {{ tipo_nomina.nombre }}</p>
+                <p><strong>Período:</strong> {{ primera_nomina.fecha_inicio }} al {{ primera_nomina.fecha_fin }}</p>
+                <p><strong>Empleados:</strong> {{ nominas.count }}</p>
+                <p class="text-danger"><strong>Advertencia:</strong> Esta acción eliminará todas las nóminas generadas con estos parámetros y no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'eliminar_nomina' fecha_generacion|date:'Y-m-d' tipo_nomina.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
             </div>
         </div>
     </div>

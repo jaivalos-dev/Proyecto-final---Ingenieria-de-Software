@@ -17,12 +17,18 @@ urlpatterns = [
     path('empleados/<int:pk>/eliminar/', views.empleado_eliminar, name='empleado_eliminar'),
 
     # Nóminas URLs
+
+    path('nominas/empleado/<int:nomina_id>/', views_nomina.nomina_empleado, name='nomina_empleado'),
+
     path('nominas/', views_nomina.nomina_list, name='nomina_list'),
     path('nominas/generar/', views_nomina.generar_nomina, name='generar_nomina'),
     path('nominas/procesar/', views_nomina.procesar_nomina, name='procesar_nomina'),
     path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/', views_nomina.nomina_detalle, name='nomina_detalle'),
-    path('nominas/empleado/<int:nomina_id>/', views_nomina.nomina_empleado, name='nomina_empleado'),
+
+    path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/eliminar/', views_nomina.eliminar_nomina, name='eliminar_nomina'),
+    path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/reporte/', views_nomina.generar_reporte_nomina_pdf, name='generar_reporte_nomina_pdf'),
 
     path('api/puestos/<int:pk>/salario/', views.puesto_salario, name='puesto_salario'),
+    
 
 ]

@@ -19,8 +19,10 @@ def dashboard(request):
     total_empleados = Empleado.objects.filter(fecha_baja__isnull=True).count()
     total_departamentos = Departamento.objects.count()
     
-    # Intentar obtener el total de la nómina actual, si existe
+    # Obtener el mes y año actual
     hoy = timezone.now().date()
+    
+    # Intentar obtener el total de la nómina actual, si existe
     nomina_actual = Nomina.objects.filter(
         fecha_inicio__lte=hoy,
         fecha_fin__gte=hoy
@@ -40,10 +42,32 @@ def dashboard(request):
         fecha_baja__isnull=True
     ).order_by('-fecha_ingreso')[:5]
     
-    # Obtener próximas nóminas
+    # Obtener próximas nóminas (nóminas futuras, ordenadas por fecha)
     proximas_nominas = Nomina.objects.filter(
         fecha_fin__gte=hoy
-    ).order_by('fecha_fin')[:5]
+    ).order_by('fecha_fin')
+    
+    # Agrupar nóminas futuras por fecha_fin y tipo para mostrar en dashboard
+    nominas_agrupadas = {}
+    for nomina in proximas_nominas:
+        key = (nomina.fecha_fin, nomina.tipo_nomina.id)
+        if key not in nominas_agrupadas:
+            nominas_agrupadas[key] = {
+                'tipo': nomina.tipo_nomina.nombre,
+                'fecha': nomina.fecha_fin,
+                'monto': nomina.total_pagar,
+                'fecha_generacion': nomina.fecha_generacion,
+                'tipo_nomina_id': nomina.tipo_nomina.id
+            }
+        else:
+            nominas_agrupadas[key]['monto'] += nomina.total_pagar
+    
+    # Convertir el diccionario a una lista ordenada por fecha
+    proximas_nominas_agrupadas = list(nominas_agrupadas.values())
+    proximas_nominas_agrupadas.sort(key=lambda x: x['fecha'])
+    
+    # Limitar a las próximas 5 nóminas
+    proximas_nominas_agrupadas = proximas_nominas_agrupadas[:5]
     
     context = {
         'total_empleados': total_empleados,
@@ -51,7 +75,7 @@ def dashboard(request):
         'total_nomina': total_nomina,
         'productividad': productividad,
         'empleados_recientes': empleados_recientes,
-        'proximas_nominas': proximas_nominas,
+        'proximas_nominas': proximas_nominas_agrupadas,
     }
     
     return render(request, 'dashboard.html', context)
