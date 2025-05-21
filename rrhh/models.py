@@ -165,11 +165,12 @@ class IndicadorProductividad(models.Model):
 
 
 class Vacaciones(models.Model):
-    """Modelo simplificado para vacaciones"""
+    """Modelo para vacaciones"""
     empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name="vacaciones")
     fecha_inicio = models.DateField(verbose_name="Fecha de Inicio")
     fecha_fin = models.DateField(verbose_name="Fecha de Fin")
     dias_totales = models.PositiveIntegerField(verbose_name="Días Totales")
+    dias_tomados = models.PositiveIntegerField(verbose_name="Días Tomados", default=0, null=True)  # Nuevo campo
     estado = models.CharField(max_length=50, choices=[
         ('Pendiente', 'Pendiente'),
         ('Aprobado', 'Aprobado'),

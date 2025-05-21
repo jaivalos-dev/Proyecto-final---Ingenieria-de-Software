@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, views_nomina, views_prestaciones
+from . import views, views_nomina, views_prestaciones, views_vacaciones
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -34,5 +34,9 @@ urlpatterns = [
     path('prestaciones/<int:pk>/cancelar/', views_prestaciones.cancelar_prestacion, name='cancelar_prestacion'),
     path('prestaciones/<int:pk>/recalcular/', views_prestaciones.recalcular_prestacion, name='recalcular_prestacion'),
     path('prestaciones/<int:pk>/eliminar/', views_prestaciones.eliminar_prestacion, name='eliminar_prestacion'),
+
+    # Vacaciones URLs
+    path('vacaciones/', views_vacaciones.vacaciones_list, name='vacaciones_list'),
+    path('vacaciones/actualizar/<int:vacaciones_id>/', views_vacaciones.actualizar_vacaciones, name='actualizar_vacaciones'),   
 
 ]
