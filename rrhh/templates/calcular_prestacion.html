@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+
+{% block title %}Calcular Prestación | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prestacion-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .prestacion-form {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="prestacion-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Calcular Prestación</h1>
+                <p class="lead">Calcule aguinaldos y bonos 14 para empleados</p>
+            </div>
+            <div>
+                <a href="{% url 'prestaciones_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="prestacion-form">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h4 class="section-title">Información General</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="tipo_prestacion" class="form-label">Tipo de Prestación</label>
+                    <select class="form-select" id="tipo_prestacion" name="tipo_prestacion" required>
+                        <option value="">Seleccione un tipo</option>
+                        {% for tipo in tipos_prestacion %}
+                            <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="empleado" class="form-label">Empleado</label>
+                    <select class="form-select" id="empleado" name="empleado" required>
+                        <option value="">Seleccione un empleado</option>
+                        {% for empleado in empleados %}
+                            <option value="{{ empleado.id }}" {% if empleado_preseleccionado and empleado.id == empleado_preseleccionado.id %}selected{% endif %}>
+                                {{ empleado.nombre }} {{ empleado.apellido }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h4 class="section-title">Información Adicional</h4>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <span id="info-text">Seleccione un tipo de prestación y un empleado para continuar.</span>
+            </div>
+            
+            <div id="aguinaldo-info" class="d-none">
+                <p>El Aguinaldo se calcula para el período del 1 de diciembre al 30 de noviembre del siguiente año.</p>
+                <p>Corresponde a un salario ordinario mensual por un año de servicio continuo, o proporcional al tiempo laborado si es menor.</p>
+                <p>Debe pagarse dentro de la primera quincena de diciembre de cada año.</p>
+            </div>
+            
+            <div id="bono14-info" class="d-none">
+                <p>El Bono 14 se calcula para el período del 1 de julio al 30 de junio del siguiente año.</p>
+                <p>Se calcula con el promedio de los salarios ordinarios devengados durante el año.</p>
+                <p>Debe pagarse dentro de la primera quincena de julio de cada año.</p>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'prestaciones_list' %}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-calculator me-2"></i>Calcular Prestación
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoPrestacionSelect = document.getElementById('tipo_prestacion');
+        const infoText = document.getElementById('info-text');
+        const aguinaldoInfo = document.getElementById('aguinaldo-info');
+        const bono14Info = document.getElementById('bono14-info');
+        
+        tipoPrestacionSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex].text;
+            
+            // Ocultar todos los divs de información
+            aguinaldoInfo.classList.add('d-none');
+            bono14Info.classList.add('d-none');
+            
+            if (selectedOption === 'Aguinaldo') {
+                aguinaldoInfo.classList.remove('d-none');
+                infoText.textContent = 'Ha seleccionado Aguinaldo. Complete el formulario para calcularlo.';
+            } else if (selectedOption === 'Bono 14') {
+                bono14Info.classList.remove('d-none');
+                infoText.textContent = 'Ha seleccionado Bono 14. Complete el formulario para calcularlo.';
+            } else {
+                infoText.textContent = 'Seleccione un tipo de prestación y un empleado para continuar.';
+            }
+        });
+    });
+</script>
+{% endblock %}

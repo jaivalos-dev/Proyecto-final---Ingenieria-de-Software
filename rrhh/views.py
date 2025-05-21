@@ -246,20 +246,12 @@ def empleado_detalle(request, pk):
     """Vista para ver los detalles de un empleado"""
     empleado = get_object_or_404(Empleado, pk=pk)
     
-    # Obtener las nóminas ordenadas por fecha más reciente
-    nominas = empleado.nominas.all().order_by('-fecha_generacion')[:5]
-    
-    # Obtener prestaciones ordenadas por fecha más reciente
-    prestaciones = empleado.prestaciones.all().order_by('-fecha_prestacion')
-    
-    # Obtener indicadores de productividad ordenados por fecha más reciente
-    indicadores = empleado.indicadores.all().order_by('-fecha_registro')
+    # Puedes ordenar prestaciones por fecha_calculo en lugar de fecha_prestacion
+    prestaciones = empleado.prestaciones.all().order_by('-fecha_calculo')
     
     context = {
         'empleado': empleado,
-        'nominas': nominas,
         'prestaciones': prestaciones,
-        'indicadores': indicadores
     }
     
     return render(request, 'empleado_detalle.html', context)

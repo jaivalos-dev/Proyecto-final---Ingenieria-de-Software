@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Prestación | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .prestacion-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .detail-card {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .badge-estado {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+    .detail-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .detail-section:last-child {
+        border-bottom: none;
+    }
+    .detail-title {
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+    .detail-item {
+        margin-bottom: 1rem;
+    }
+    .detail-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    .detail-value {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="prestacion-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Detalle de Prestación</h1>
+                <p class="lead">
+                    {{ prestacion.tipo_prestacion.nombre }}
+                    <span class="badge 
+                        {% if prestacion.estado.nombre == 'Pagado' %}bg-success
+                        {% elif prestacion.estado.nombre == 'Calculado' %}bg-info
+                        {% elif prestacion.estado.nombre == 'Cancelado' %}bg-danger
+                        {% else %}bg-warning{% endif %} badge-estado ms-2">
+                        {{ prestacion.estado.nombre }}
+                    </span>
+                </p>
+            </div>
+            <div>
+                <a href="{% url 'prestaciones_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="detail-card">
+            <div class="detail-section">
+                <h4 class="detail-title">Información General</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Empleado</div>
+                            <div class="detail-value">{{ prestacion.empleado.nombre }} {{ prestacion.empleado.apellido }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">DPI</div>
+                            <div class="detail-value">{{ prestacion.empleado.dpi }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Puesto</div>
+                            <div class="detail-value">{{ prestacion.empleado.puesto.nombre }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Departamento</div>
+                            <div class="detail-value">{{ prestacion.empleado.puesto.departamento.nombre }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h4 class="detail-title">Detalles de la Prestación</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Tipo de Prestación</div>
+                            <div class="detail-value">{{ prestacion.tipo_prestacion.nombre }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Estado</div>
+                            <div class="detail-value">
+                                <span class="badge 
+                                    {% if prestacion.estado.nombre == 'Pagado' %}bg-success
+                                    {% elif prestacion.estado.nombre == 'Calculado' %}bg-info
+                                    {% elif prestacion.estado.nombre == 'Cancelado' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ prestacion.estado.nombre }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Período</div>
+                            <div class="detail-value">{{ prestacion.periodo_inicio|date:"d/m/Y" }} al {{ prestacion.periodo_fin|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Monto</div>
+                            <div class="detail-value fs-4 text-success">Q{{ prestacion.monto|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="detail-section">
+                <h4 class="detail-title">Fechas</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Fecha de Cálculo</div>
+                            <div class="detail-value">{{ prestacion.fecha_calculo|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-label">Fecha de Pago</div>
+                            <div class="detail-value">
+                                {% if prestacion.fecha_pago %}
+                                    {{ prestacion.fecha_pago|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="text-muted">Pendiente de pago</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if prestacion.observaciones %}
+            <div class="detail-section">
+                <h4 class="detail-title">Observaciones</h4>
+                <p>{{ prestacion.observaciones }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="detail-card">
+            <h4 class="mb-4">Acciones</h4>
+            
+            {% if prestacion.estado.nombre == 'Calculado' %}
+                <form method="post" action="{% url 'pagar_prestacion' prestacion.id %}" class="mb-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-money-bill-wave me-2"></i>Marcar como Pagado
+                    </button>
+                </form>
+            {% endif %}
+            
+            {% if prestacion.estado.nombre != 'Pagado' and prestacion.estado.nombre != 'Cancelado' %}
+                <form method="post" action="{% url 'cancelar_prestacion' prestacion.id %}" class="mb-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="fas fa-ban me-2"></i>Cancelar Prestación
+                    </button>
+                </form>
+            {% endif %}
+            
+            {% if prestacion.estado.nombre != 'Pagado' %}
+                <a href="{% url 'recalcular_prestacion' prestacion.id %}" class="btn btn-warning w-100 mb-3">
+                    <i class="fas fa-sync-alt me-2"></i>Recalcular Prestación
+                </a>
+            {% endif %}
+
+            {% if prestacion.estado.nombre != 'Pagado' %}
+                <form method="post" action="{% url 'eliminar_prestacion' prestacion.id %}" class="mb-3" onsubmit="return confirm('¿Está seguro de eliminar esta prestación? Esta acción no se puede deshacer.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="fas fa-trash-alt me-2"></i>Eliminar Prestación
+                    </button>
+                </form>
+            {% endif %}
+
+            <a href="{% url 'empleado_detalle' prestacion.empleado.id %}" class="btn btn-outline-primary w-100 mb-3">
+                <i class="fas fa-user me-2"></i>Ver Empleado
+            </a>
+            
+            <a href="#" class="btn btn-outline-secondary w-100" onclick="window.print()">
+                <i class="fas fa-print me-2"></i>Imprimir
+            </a>
+        </div>
+        
+        <div class="detail-card mt-4">
+            <h4 class="mb-4">Información Legal</h4>
+            
+            {% if prestacion.tipo_prestacion.nombre == 'Aguinaldo' %}
+                <p><strong>Aguinaldo:</strong> Según el Decreto No. 76-78 del Congreso de la República de Guatemala, el Aguinaldo corresponde a un mes de salario ordinario por un año de servicio continuo, o la parte proporcional correspondiente.</p>
+                <p>Debe pagarse el 50% en la primera quincena de diciembre y el 50% restante en la primera quincena de enero.</p>
+            {% else %}
+                <p><strong>Bono 14:</strong> De acuerdo con el Decreto No. 42-92 del Congreso de la República de Guatemala, el Bono 14 es equivalente a un salario ordinario mensual por un año de servicio continuo, o proporcional al tiempo laborado.</p>
+                <p>Debe pagarse dentro de la primera quincena de julio de cada año.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

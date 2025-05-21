@@ -207,7 +207,7 @@
                         <div class="list-group-item">
                             <div class="d-flex w-100 justify-content-between">
                                 <h6 class="mb-1">{{ prestacion.tipo_prestacion.nombre }}</h6>
-                                <small>{{ prestacion.fecha_prestacion }}</small>
+                                <small>{{ prestacion.fecha_calculo|date:"d/m/Y" }}</small>
                             </div>
                             <p class="mb-1">Q{{ prestacion.monto }}</p>
                         </div>
@@ -270,6 +270,47 @@
                 </div>
             </div>
         </div>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Prestaciones</h5>
+                <a href="{% url 'calcular_prestacion' %}?empleado={{ empleado.id }}" class="btn btn-sm btn-primary">Nueva</a>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for prestacion in empleado.prestaciones.all|slice:":5" %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ prestacion.tipo_prestacion.nombre }}</h6>
+                                <small>{{ prestacion.fecha_calculo|date:"d/m/Y" }}</small>
+                            </div>
+                            <p class="mb-1">Período: {{ prestacion.periodo_inicio|date:"d/m/Y" }} - {{ prestacion.periodo_fin|date:"d/m/Y" }}</p>
+                            <p class="mb-1">
+                                <span class="badge 
+                                    {% if prestacion.estado.nombre == 'Pagado' %}bg-success
+                                    {% elif prestacion.estado.nombre == 'Calculado' %}bg-info
+                                    {% elif prestacion.estado.nombre == 'Cancelado' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ prestacion.estado.nombre }}
+                                </span>
+                                <span class="float-end">Q{{ prestacion.monto|floatformat:2 }}</span>
+                            </p>
+                            <div class="mt-2">
+                                <a href="{% url 'prestacion_detalle' prestacion.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-info-circle text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No hay prestaciones registradas</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
