@@ -5,44 +5,121 @@
 {% block extra_css %}
 <style>
     .prestacion-header {
-        background-color: #f8f9fa;
+        background-color: #F1F1F1;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
+
     .detail-card {
-        background-color: white;
-        border-radius: 0.3rem;
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
+        border-radius: 0.5rem;
         padding: 2rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
     }
+
     .badge-estado {
         font-size: 0.875rem;
         padding: 0.5rem 0.75rem;
     }
+
     .detail-section {
         margin-bottom: 2rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid #e9ecef;
+        border-bottom: 1px solid #CED4DA;
     }
+
     .detail-section:last-child {
         border-bottom: none;
     }
+
     .detail-title {
         margin-bottom: 1.5rem;
-        color: #495057;
+        color: #1F3F49;
+        font-weight: 600;
     }
-    .detail-item {
-        margin-bottom: 1rem;
-    }
+
     .detail-label {
         font-size: 0.875rem;
-        color: #6c757d;
+        color: #7E909A;
         margin-bottom: 0.25rem;
     }
+
     .detail-value {
         font-weight: 500;
+        color: #1F3F49;
+    }
+
+    .fs-4.text-success {
+        font-size: 1.5rem !important;
+        color: #3FA796 !important;
+    }
+
+    .text-muted {
+        color: #7E909A !important;
+    }
+
+    .btn-success {
+        background-color: #3FA796;
+        border: none;
+    }
+
+    .btn-success:hover {
+        background-color: #34857a;
+    }
+
+    .btn-danger {
+        background-color: #EA6A47;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background-color: #c95638;
+    }
+
+    .btn-warning {
+        background-color: #FFC107;
+        color: #1F3F49;
+        border: none;
+    }
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+    }
+
+    .btn-outline-secondary {
+        border-color: #1F3F49;
+        color: #1F3F49;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    .btn-outline-primary {
+        border-color: #1F3F49;
+        color: #1F3F49;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .prestacion-header {
+            display: none;
+        }
+        body {
+            background-color: white !important;
+        }
     }
 </style>
 {% endblock %}

@@ -5,36 +5,116 @@
 {% block extra_css %}
 <style>
     .nomina-header {
-        background-color: #f8f9fa;
+        background-color: #F1F1F1;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
+
     .filter-section {
-        background-color: white;
-        border-radius: 0.3rem;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
     }
+
+    .form-label {
+        color: #1F3F49;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background-color: #1F3F49;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #16333a;
+    }
+
+    .btn-outline-secondary {
+        border-color: #1F3F49;
+        color: #1F3F49;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
     .card-nomina {
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
+        border-radius: 0.3rem;
         transition: transform 0.2s;
+        box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05);
     }
+
     .card-nomina:hover {
         transform: translateY(-5px);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1);
     }
+
+    .card-header {
+        background-color: #1F3F49;
+        color: white;
+        font-weight: bold;
+    }
+
     .badge-tipo {
         font-size: 0.75rem;
         padding: 0.35rem 0.65rem;
     }
+
+    .badge.bg-success, .badge.bg-warning, .badge.bg-danger {
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
     .nomina-date {
         font-size: 0.875rem;
-        color: #6c757d;
+        color: #7E909A;
     }
+
     .nomina-total {
         font-size: 1.25rem;
         font-weight: 600;
+        color: #1F3F49;
+    }
+
+    .card-title {
+        color: #1F3F49;
+    }
+
+    .card-text small {
+        color: #7E909A;
+    }
+
+    .text-success {
+        color: #3FA796 !important;
+    }
+
+    .pagination .page-link {
+        color: #1F3F49;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #F1F1F1;
+    }
+
+    .pagination .active .page-link {
+        background-color: #1F3F49;
+        color: white;
+        border-color: #1F3F49;
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-left: 4px solid #1F3F49;
+        color: #1F3F49;
     }
 </style>
 {% endblock %}

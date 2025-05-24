@@ -5,103 +5,94 @@
 {% block extra_css %}
 <style>
     .nomina-header {
-        background-color: #f8f9fa;
+        background-color: #F1F1F1;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
+
     .boleta-card {
-        background-color: white;
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
         border-radius: 0.3rem;
         padding: 2rem;
         margin-bottom: 1.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
     }
-    .empresa-info {
-        margin-bottom: 2rem;
-        text-align: center;
-    }
+
     .empresa-nombre {
         font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
+        font-weight: bold;
+        color: #1F3F49;
     }
+
     .empresa-slogan {
-        font-size: 1rem;
-        color: #6c757d;
-        margin-bottom: 0.5rem;
+        color: #7E909A;
     }
-    .empresa-direccion {
-        font-size: 0.875rem;
+
+    .boleta-titulo h3 {
+        color: #1F3F49;
     }
-    .boleta-titulo {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .empleado-info {
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px dashed #dee2e6;
-    }
+
     .seccion-titulo {
-        font-size: 1.1rem;
+        color: #1F3F49;
         font-weight: 600;
-        margin-bottom: 1rem;
-        color: #495057;
     }
-    .detalles-nomina {
-        margin-bottom: 2rem;
-    }
-    .detalles-row {
-        margin-bottom: 0.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px dotted #dee2e6;
-    }
-    .detalles-row:last-child {
-        border-bottom: none;
-    }
+
     .detalles-label {
-        font-weight: 600;
+        font-weight: 500;
+        color: #1F3F49;
     }
+
     .detalles-valor {
         text-align: right;
+        color: #1F3F49;
     }
+
     .totales {
-        background-color: #f8f9fa;
-        padding: 1.5rem;
+        background-color: #e7f3ff;
+        border: 1px solid #1F3F49;
         border-radius: 0.3rem;
-        margin-bottom: 2rem;
+        padding: 1.5rem;
     }
-    .total-row {
-        margin-bottom: 0.5rem;
-    }
+
     .total-final {
         font-size: 1.25rem;
         font-weight: 700;
-        padding-top: 0.5rem;
-        margin-top: 0.5rem;
-        border-top: 2px solid #dee2e6;
+        border-top: 2px solid #1F3F49;
+        color: #1F3F49;
     }
-    .firma-seccion {
-        margin-top: 3rem;
-        display: flex;
-        justify-content: space-between;
-    }
-    .firma {
-        width: 40%;
-        text-align: center;
-    }
+
     .firma-linea {
-        margin-top: 3rem;
-        border-top: 1px solid #495057;
+        border-top: 1px solid #1F3F49;
         padding-top: 0.5rem;
+        color: #1F3F49;
     }
-    .badge-tipo {
-        font-size: 0.75rem;
-        padding: 0.35rem 0.65rem;
+
+    .btn-outline-secondary {
+        border-color: #1F3F49;
+        color: #1F3F49;
     }
+
+    .btn-outline-secondary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    .btn-primary {
+        background-color: #EA6A47;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #c95638;
+    }
+
+    .text-muted {
+        color: #7E909A !important;
+    }
+
     @media print {
         .no-print {
             display: none !important;
@@ -142,7 +133,7 @@
 
 <div class="boleta-card">
     <div class="empresa-info">
-        <div class="empresa-nombre">EMPRESA EJEMPLO, S.A.</div>
+        <div class="empresa-nombre">PROYECTO-RRHH, S.A.</div>
         <div class="empresa-slogan">Gestión de Recursos Humanos</div>
         <div class="empresa-direccion">Ciudad de Guatemala, Guatemala</div>
     </div>

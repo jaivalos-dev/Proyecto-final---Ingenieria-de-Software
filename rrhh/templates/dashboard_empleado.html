@@ -5,22 +5,72 @@
 {% block extra_css %}
 <style>
     .empleado-header {
-        background-color: #f8f9fa;
+        background-color: #F1F1F1;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
+
     .card-empleado {
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
         transition: transform 0.3s;
+        border-radius: 6px;
     }
+
     .card-empleado:hover {
         transform: translateY(-5px);
     }
+
+    .card-header.bg-info {
+        background-color: #EA6A47 !important;
+        color: white !important;
+    }
+
+    .card-header.bg-success {
+        background-color: #1F3F49 !important;
+        color: white !important;
+    }
+
+    .card-header.bg-warning {
+        background-color: #FFC107 !important;
+        color: #1F3F49 !important;
+    }
+
+    .form-label,
+    .section-title {
+        color: #1F3F49;
+    }
+
     .info-personal {
         background-color: #e7f3ff;
-        border-left: 4px solid #0066cc;
+        border-left: 4px solid #1F3F49;
         padding: 1rem;
         margin-bottom: 2rem;
+    }
+
+    .btn-outline-primary {
+        border-color: #1F3F49;
+        color: #1F3F49;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    .btn-info {
+        background-color: #EA6A47;
+        border: none;
+    }
+
+    .btn-info:hover {
+        background-color: #c95638;
+    }
+
+    .text-muted {
+        color: #7E909A !important;
     }
 </style>
 {% endblock %}

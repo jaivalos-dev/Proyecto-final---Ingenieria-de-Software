@@ -5,30 +5,91 @@
 {% block extra_css %}
 <style>
     .nomina-header {
-        background-color: #f8f9fa;
+        background-color: #F1F1F1;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
+
     .nomina-form {
-        background-color: white;
-        border-radius: 0.3rem;
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
+        border-radius: 0.5rem;
         padding: 2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
     }
+
     .form-section {
         margin-bottom: 2rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid #e9ecef;
+        border-bottom: 1px solid #CED4DA;
     }
+
     .form-section:last-child {
         border-bottom: none;
-        margin-bottom: 0;
     }
+
     .section-title {
         margin-bottom: 1.5rem;
-        color: #495057;
+        color: #1F3F49;
+    }
+
+    .form-label {
+        color: #1F3F49;
+    }
+
+    .form-text {
+        color: #7E909A;
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-left: 4px solid #1F3F49;
+        color: #1F3F49;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-left: 4px solid #B02A37;
+        color: #842029;
+    }
+
+    .btn-primary {
+        background-color: #1F3F49;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #16333a;
+    }
+
+    .btn-outline-secondary {
+        border-color: #1F3F49;
+        color: #1F3F49;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    .card {
+        border: 1px solid #7E909A;
+    }
+
+    .card-header {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    .card-body h6 {
+        color: #1F3F49;
+        font-weight: bold;
+    }
+
+    .card-body li {
+        color: #7E909A;
     }
 </style>
 {% endblock %}

@@ -5,26 +5,101 @@
 {% block extra_css %}
 <style>
     .employee-header {
-        background-color: #f8f9fa;
+        background-color: #F1F1F1;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
+
     .filter-section {
-        background-color: white;
-        border-radius: 0.3rem;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
     }
+
+    .form-label {
+        color: #1F3F49;
+    }
+
+    .btn-primary {
+        background-color: #1F3F49;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #16333a;
+    }
+
+    .employee-card {
+        border: 1px solid #7E909A;
+        transition: all 0.3s ease-in-out;
+    }
+
     .employee-card:hover {
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        transform: translateY(-2px);
-        transition: all 0.3s;
+        transform: translateY(-3px);
     }
+
+    .card-header {
+        background-color: #1F3F49;
+        color: white;
+    }
+
     .status-badge {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
+    }
+
+    .btn-outline-primary {
+        border-color: #1F3F49;
+        color: #1F3F49;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        border-color: #7E909A;
+        color: #7E909A;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #7E909A;
+        color: white;
+    }
+
+    .btn-outline-danger {
+        border-color: #EA6A47;
+        color: #EA6A47;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #EA6A47;
+        color: white;
+    }
+
+    .text-muted {
+        color: #7E909A !important;
+    }
+
+    .page-link {
+        color: #1F3F49;
+    }
+
+    .page-link:hover {
+        background-color: #F1F1F1;
+    }
+
+    .page-item.active .page-link {
+        background-color: #1F3F49;
+        border-color: #1F3F49;
+        color: white;
     }
 </style>
 {% endblock %}

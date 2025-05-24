@@ -5,66 +5,139 @@
 {% block extra_css %}
 <style>
     .nomina-header {
-        background-color: #f8f9fa;
+        background-color: #F1F1F1;
         padding: 1.5rem 0;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
+
     .nomina-card {
-        background-color: white;
-        border-radius: 0.3rem;
+        background-color: #FFFFFF;
+        border: 1px solid #7E909A;
+        border-radius: 0.5rem;
         padding: 2rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 2rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
     }
+
+    .table thead th {
+        background-color: #F1F1F1;
+        color: #1F3F49;
+        font-weight: 600;
+    }
+
     .badge-tipo {
         font-size: 0.875rem;
         padding: 0.5rem 0.75rem;
     }
-    .table-nomina thead th {
-        background-color: #f8f9fa;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-    .table-responsive {
-        max-height: 600px;
-        overflow-y: auto;
-    }
+
     .info-section {
-        background-color: #f8f9fa;
-        border-radius: 0.3rem;
+        background-color: #fefefe;
+        border: 1px solid #CED4DA;
+        border-radius: 0.5rem;
         padding: 1.5rem;
-        margin-bottom: 1.5rem;
     }
+
     .info-card {
         background-color: white;
+        border: 1px solid #7E909A;
         border-radius: 0.3rem;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.25rem;
     }
+
     .info-title {
-        color: #495057;
+        color: #1F3F49;
+        font-weight: bold;
         margin-bottom: 1rem;
-        font-weight: 600;
     }
-    .total-value {
-        font-size: 2rem;
-        font-weight: 700;
-    }
+
     .total-label {
+        color: #7E909A;
         font-size: 0.875rem;
-        color: #6c757d;
-        text-transform: uppercase;
     }
-    .action-buttons {
-        position: sticky;
-        bottom: 1rem;
-        background-color: rgba(255, 255, 255, 0.9);
-        padding: 1rem 0;
-        border-top: 1px solid #dee2e6;
-        z-index: 2;
+
+    .total-value {
+        font-size: 1.75rem;
+        font-weight: bold;
+        color: #1F3F49;
+    }
+
+    .btn-outline-primary {
+        border-color: #1F3F49;
+        color: #1F3F49;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #1F3F49;
+        color: white;
+    }
+
+    .btn-outline-success {
+        border-color: #3FA796;
+        color: #3FA796;
+    }
+
+    .btn-outline-success:hover {
+        background-color: #3FA796;
+        color: white;
+    }
+
+    .btn-outline-danger {
+        border-color: #EA6A47;
+        color: #EA6A47;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #EA6A47;
+        color: white;
+    }
+
+    .btn-success {
+        background-color: #3FA796;
+        border: none;
+    }
+
+    .btn-success:hover {
+        background-color: #2e8273;
+    }
+
+    .btn-warning {
+        background-color: #FFC107;
+        color: #1F3F49;
+        border: none;
+    }
+
+    .btn-warning:hover {
+        background-color: #e0a800;
+    }
+
+    .btn-danger {
+        background-color: #EA6A47;
+        border: none;
+    }
+
+    .btn-danger:hover {
+        background-color: #c95638;
+    }
+
+    .badge.bg-success, .badge.bg-danger, .badge.bg-warning {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .text-muted {
+        color: #7E909A !important;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            background-color: white !important;
+        }
     }
 </style>
 {% endblock %}

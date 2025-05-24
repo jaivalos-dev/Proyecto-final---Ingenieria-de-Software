@@ -5,17 +5,79 @@
 {% block extra_css %}
 <style>
     .vacaciones-header {
-        background-color: #f8f9fa;
-        padding: 1.5rem 0;
+        background-color: #F1F1F1;
+        padding: 1.5rem;
         margin-bottom: 2rem;
         border-radius: 0.3rem;
+        border-left: 4px solid #1F3F49;
     }
-    .table th {
-        background-color: #f8f9fa;
+
+    .table thead th {
+        background-color: #1F3F49;
+        color: white;
     }
+
+    .table td {
+        color: #1F3F49;
+        vertical-align: middle;
+    }
+
     .modal-form-input {
         max-width: 100px;
         margin: 0 auto;
+    }
+
+    .form-label {
+        color: #1F3F49;
+        font-weight: 500;
+    }
+
+    .btn-primary {
+        background-color: #1F3F49;
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background-color: #16333a;
+    }
+
+    .btn-secondary {
+        background-color: #7E909A;
+        border: none;
+    }
+
+    .btn-secondary:hover {
+        background-color: #6c7b83;
+    }
+
+    .text-muted {
+        color: #7E909A !important;
+    }
+
+    .modal-header {
+        background-color: #1F3F49;
+        color: white;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .modal-title {
+        font-weight: bold;
+    }
+
+    .modal-body p strong {
+        color: #1F3F49;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #dee2e6;
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: #f9f9f9;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #e7f3ff;
     }
 </style>
 {% endblock %}
