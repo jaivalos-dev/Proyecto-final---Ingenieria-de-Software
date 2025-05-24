@@ -79,6 +79,12 @@
                     <span class="badge {% if tipo_nomina.nombre == 'Mensual' %}bg-primary{% elif tipo_nomina.nombre == 'Quincenal' %}bg-success{% else %}bg-info{% endif %} badge-tipo">
                         {{ tipo_nomina.nombre }}
                     </span>
+                    <span class="badge 
+                        {% if primera_nomina.estado == 'Pagada' %}bg-success
+                        {% elif primera_nomina.estado == 'Cancelada' %}bg-danger
+                        {% else %}bg-warning{% endif %} badge-tipo ms-2">
+                        {{ primera_nomina.estado }}
+                    </span>
                 </h1>
                 <p class="lead">Período: {{ primera_nomina.fecha_inicio }} al {{ primera_nomina.fecha_fin }}</p>
             </div>
@@ -237,21 +243,40 @@
     <div class="container">
         <div class="d-flex justify-content-between">
             <div>
-                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarNominaModal">
-                    <i class="fas fa-trash-alt me-2"></i>Eliminar Nómina
-                </button>
+                {% if primera_nomina.estado != 'Pagada' %}
+                    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarNominaModal">
+                        <i class="fas fa-trash-alt me-2"></i>Eliminar Nómina
+                    </button>
+                {% endif %}
             </div>
             <div>
                 <a href="{% url 'generar_reporte_nomina_pdf' fecha_generacion|date:'Y-m-d' tipo_nomina.id %}" class="btn btn-outline-success me-2">
                     <i class="fas fa-file-pdf me-2"></i>Generar Reporte
                 </a>
-                <button class="btn btn-primary">
-                    <i class="fas fa-paper-plane me-2"></i>Enviar por Correo
-                </button>
+                
+                {% if primera_nomina.estado == 'Generada' %}
+                    <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#pagarNominaModal">
+                        <i class="fas fa-money-bill-wave me-2"></i>Marcar como Pagada
+                    </button>
+                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#cancelarNominaModal">
+                        <i class="fas fa-ban me-2"></i>Cancelar Nómina
+                    </button>
+                {% elif primera_nomina.estado == 'Pagada' %}
+                    <span class="badge bg-success fs-6 py-2 px-3">
+                        <i class="fas fa-check-circle me-2"></i>Nómina Pagada
+                        {% if primera_nomina.fecha_pago %}
+                            - {{ primera_nomina.fecha_pago|date:"d/m/Y" }}
+                        {% endif %}
+                    </span>
+                {% elif primera_nomina.estado == 'Cancelada' %}
+                    <span class="badge bg-danger fs-6 py-2 px-3">
+                        <i class="fas fa-times-circle me-2"></i>Nómina Cancelada
+                    </span>
+                {% endif %}
             </div>
         </div>
     </div>
-</div>  
+</div>
 <div class="modal fade" id="eliminarNominaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -276,4 +301,59 @@
         </div>
     </div>
 </div>
+
+
+<!-- Modal para pagar nómina -->
+<div class="modal fade" id="pagarNominaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Pago de Nómina</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea marcar esta nómina como pagada?</p>
+                <p><strong>Tipo:</strong> {{ tipo_nomina.nombre }}</p>
+                <p><strong>Período:</strong> {{ primera_nomina.fecha_inicio }} al {{ primera_nomina.fecha_fin }}</p>
+                <p><strong>Empleados:</strong> {{ nominas.count }}</p>
+                <p><strong>Total a pagar:</strong> Q{{ total_pagar|floatformat:2 }}</p>
+                <p class="text-success"><strong>Esta acción marcará la nómina como pagada.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'pagar_nomina' fecha_generacion|date:'Y-m-d' tipo_nomina.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Confirmar Pago</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cancelar nómina -->
+<div class="modal fade" id="cancelarNominaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Cancelación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea cancelar esta nómina?</p>
+                <p><strong>Tipo:</strong> {{ tipo_nomina.nombre }}</p>
+                <p><strong>Período:</strong> {{ primera_nomina.fecha_inicio }} al {{ primera_nomina.fecha_fin }}</p>
+                <p><strong>Empleados:</strong> {{ nominas.count }}</p>
+                <p class="text-danger"><strong>Esta acción marcará la nómina como cancelada y no se podrá pagar.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'cancelar_nomina' fecha_generacion|date:'Y-m-d' tipo_nomina.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

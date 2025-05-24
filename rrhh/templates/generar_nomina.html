@@ -130,3 +130,134 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoNominaSelect = document.getElementById('id_tipo_nomina');
+    const fechaInicioInput = document.getElementById('id_fecha_inicio');
+    const fechaFinInput = document.getElementById('id_fecha_fin');
+    
+    // Función para formatear fecha a YYYY-MM-DD
+    function formatearFecha(fecha) {
+        const año = fecha.getFullYear();
+        const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+        const dia = String(fecha.getDate()).padStart(2, '0');
+        return `${año}-${mes}-${dia}`;
+    }
+    
+    // Función para obtener el último día del mes
+    function ultimoDiaDelMes(año, mes) {
+        return new Date(año, mes + 1, 0).getDate();
+    }
+    
+    // Función para obtener el lunes de la semana actual
+    function obtenerLunesActual() {
+        const hoy = new Date();
+        const diaSemana = hoy.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
+        const diasHastaLunes = diaSemana === 0 ? -6 : 1 - diaSemana; // Si es domingo, retroceder 6 días
+        const lunes = new Date(hoy);
+        lunes.setDate(hoy.getDate() + diasHastaLunes);
+        return lunes;
+    }
+    
+    tipoNominaSelect.addEventListener('change', function() {
+        const tipoSeleccionado = this.options[this.selectedIndex].text;
+        const hoy = new Date();
+        
+        if (tipoSeleccionado === 'Semanal') {
+            // Para semanal: del lunes actual al domingo (7 días)
+            const lunes = obtenerLunesActual();
+            const domingo = new Date(lunes);
+            domingo.setDate(lunes.getDate() + 6);
+            
+            fechaInicioInput.value = formatearFecha(lunes);
+            fechaFinInput.value = formatearFecha(domingo);
+            
+            // Mostrar mensaje informativo
+            mostrarMensajeTipo('Nómina Semanal: 7 días laborales (Lunes a Domingo)');
+            
+        } else if (tipoSeleccionado === 'Quincenal') {
+            // Para quincenal: 1-15 o 16-fin de mes
+            const dia = hoy.getDate();
+            const año = hoy.getFullYear();
+            const mes = hoy.getMonth();
+            
+            if (dia <= 15) {
+                // Primera quincena: 1 al 15
+                fechaInicioInput.value = formatearFecha(new Date(año, mes, 1));
+                fechaFinInput.value = formatearFecha(new Date(año, mes, 15));
+                mostrarMensajeTipo('Nómina Quincenal: Primera quincena (1 al 15)');
+            } else {
+                // Segunda quincena: 16 al último día del mes
+                const ultimoDia = ultimoDiaDelMes(año, mes);
+                fechaInicioInput.value = formatearFecha(new Date(año, mes, 16));
+                fechaFinInput.value = formatearFecha(new Date(año, mes, ultimoDia));
+                mostrarMensajeTipo('Nómina Quincenal: Segunda quincena (16 al último día del mes)');
+            }
+            
+        } else if (tipoSeleccionado === 'Mensual') {
+            // Para mensual: primer y último día del mes actual
+            const año = hoy.getFullYear();
+            const mes = hoy.getMonth();
+            const ultimoDia = ultimoDiaDelMes(año, mes);
+            
+            fechaInicioInput.value = formatearFecha(new Date(año, mes, 1));
+            fechaFinInput.value = formatearFecha(new Date(año, mes, ultimoDia));
+            
+            mostrarMensajeTipo('Nómina Mensual: Mes completo');
+        }
+    });
+    
+    // Función para mostrar mensaje informativo
+    function mostrarMensajeTipo(mensaje) {
+        // Remover mensaje anterior si existe
+        const mensajeAnterior = document.getElementById('mensaje-tipo-nomina');
+        if (mensajeAnterior) {
+            mensajeAnterior.remove();
+        }
+        
+        // Crear nuevo mensaje
+        const divMensaje = document.createElement('div');
+        divMensaje.id = 'mensaje-tipo-nomina';
+        divMensaje.className = 'alert alert-info mt-2';
+        divMensaje.innerHTML = `<i class="fas fa-info-circle me-2"></i>${mensaje}`;
+        
+        // Insertar después del select de tipo de nómina
+        tipoNominaSelect.parentNode.appendChild(divMensaje);
+    }
+    
+    // Validación adicional al enviar el formulario
+    const formulario = document.querySelector('form');
+    formulario.addEventListener('submit', function(e) {
+        const fechaInicio = new Date(fechaInicioInput.value);
+        const fechaFin = new Date(fechaFinInput.value);
+        const tipoSeleccionado = tipoNominaSelect.options[tipoNominaSelect.selectedIndex].text;
+        
+        // Calcular días entre fechas
+        const diferenciaTiempo = fechaFin.getTime() - fechaInicio.getTime();
+        const diferenciaDias = Math.ceil(diferenciaTiempo / (1000 * 3600 * 24)) + 1;
+        
+        // Validar según tipo de nómina
+        let esValido = true;
+        let mensajeError = '';
+        
+        if (tipoSeleccionado === 'Semanal' && diferenciaDias !== 7) {
+            esValido = false;
+            mensajeError = 'Una nómina semanal debe tener exactamente 7 días.';
+        } else if (tipoSeleccionado === 'Quincenal' && (diferenciaDias < 14 || diferenciaDias > 16)) {
+            esValido = false;
+            mensajeError = 'Una nómina quincenal debe tener entre 14 y 16 días.';
+        } else if (tipoSeleccionado === 'Mensual' && (diferenciaDias < 28 || diferenciaDias > 31)) {
+            esValido = false;
+            mensajeError = 'Una nómina mensual debe tener entre 28 y 31 días.';
+        }
+        
+        if (!esValido) {
+            e.preventDefault();
+            alert('Error: ' + mensajeError + ' Por favor, ajuste las fechas correctamente.');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}Calcular Liquidación | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .liquidacion-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .liquidacion-form {
+        background-color: white;
+        border-radius: 0.3rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .form-section {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        margin-bottom: 1.5rem;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="liquidacion-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="display-6">Calcular Liquidación</h1>
+                <p class="lead">Genere la liquidación final de un empleado</p>
+            </div>
+            <div>
+                <a href="{% url 'liquidaciones_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="liquidacion-form">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h4 class="section-title">Seleccionar Empleado</h4>
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label for="empleado" class="form-label">Empleado a Liquidar</label>
+                    <select class="form-select" id="empleado" name="empleado" required>
+                        <option value="">Seleccione un empleado</option>
+                        {% for empleado in empleados %}
+                            <option value="{{ empleado.id }}" 
+                                    data-puesto="{{ empleado.puesto.nombre }}"
+                                    data-salario="{{ empleado.puesto.salario_base }}"
+                                    data-ingreso="{{ empleado.fecha_ingreso|date:'d/m/Y' }}"
+                                    data-departamento="{{ empleado.puesto.departamento.nombre }}">
+                                {{ empleado.nombre }} {{ empleado.apellido }} - {{ empleado.dpi }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Información del empleado seleccionado -->
+            <div id="empleado-info" class="d-none">
+                <div class="alert alert-info">
+                    <h6>Información del Empleado:</h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <strong>Puesto:</strong> <span id="info-puesto"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Departamento:</strong> <span id="info-departamento"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Salario:</strong> Q<span id="info-salario"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Fecha Ingreso:</strong> <span id="info-ingreso"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <h4 class="section-title">Conceptos a Calcular</h4>
+            <div class="alert alert-warning">
+                <h6>La liquidación incluirá automáticamente:</h6>
+                <ul class="mb-0">
+                    <li><strong>Indemnización:</strong> Un mes de salario por cada año trabajado</li>
+                    <li><strong>Salario proporcional:</strong> Días trabajados en el mes actual</li>
+                    <li><strong>Vacaciones pendientes:</strong> Días de vacaciones no gozados</li>
+                    <li><strong>Aguinaldo proporcional:</strong> Proporción del período 1 dic - 30 nov</li>
+                    <li><strong>Bono 14 proporcional:</strong> Proporción del período 1 jul - 30 jun</li>
+                    <li><strong>Deducciones:</strong> IGSS sobre salario proporcional</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'liquidaciones_list' %}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Está seguro de generar la liquidación? Esta acción marcará al empleado como dado de baja.')">
+                <i class="fas fa-calculator me-2"></i>Calcular Liquidación
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const empleadoSelect = document.getElementById('empleado');
+        const empleadoInfo = document.getElementById('empleado-info');
+        
+        empleadoSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption.value) {
+                // Mostrar información del empleado
+                document.getElementById('info-puesto').textContent = selectedOption.getAttribute('data-puesto');
+                document.getElementById('info-departamento').textContent = selectedOption.getAttribute('data-departamento');
+                document.getElementById('info-salario').textContent = selectedOption.getAttribute('data-salario');
+                document.getElementById('info-ingreso').textContent = selectedOption.getAttribute('data-ingreso');
+                
+                empleadoInfo.classList.remove('d-none');
+            } else {
+                empleadoInfo.classList.add('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %}

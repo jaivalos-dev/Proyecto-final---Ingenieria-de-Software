@@ -12,8 +12,9 @@ from .utils import generar_reporte_nomina
 
 from .models import Empleado, Nomina, Deduccion, TipoNomina, Departamento, Estado, Puesto
 from .forms_nomina import GenerarNominaForm, EmpleadoNominaFormSet, FiltroNominaForm
+from .decorators import admin_required, empleado_required, admin_or_empleado_required
 
-@login_required
+@admin_required
 def nomina_list(request):
     """Vista para listar todas las nóminas generadas"""
     # Formulario de filtro
@@ -40,6 +41,11 @@ def nomina_list(request):
             
         if departamento:
             nominas = nominas.filter(empleado__puesto__departamento=departamento)
+
+    # Agregar filtro por estado (fuera del if del formulario)
+    estado_filtro = request.GET.get('estado')
+    if estado_filtro:
+        nominas = nominas.filter(estado=estado_filtro)
     
     # Agrupar nóminas por fecha de generación y tipo
     nominas_agrupadas = {}
@@ -50,8 +56,9 @@ def nomina_list(request):
                 'fecha_generacion': nomina.fecha_generacion,
                 'tipo_nomina': nomina.tipo_nomina,
                 'fecha_inicio': nomina.fecha_inicio,
-                'fecha_fin': nomina.fecha_fin,
+                'fecha_fin': nomina.fecha_fin,  
                 'total_pagar': nomina.total_pagar,
+                'estado': nomina.estado,
                 'count': 1
             }
         else:
@@ -74,7 +81,7 @@ def nomina_list(request):
     
     return render(request, 'nomina_list.html', context)
 
-@login_required
+@admin_required
 def generar_nomina(request):
     """Vista para generar una nueva nómina"""
     if request.method == 'POST':
@@ -126,7 +133,7 @@ def generar_nomina(request):
     
     return render(request, 'generar_nomina.html', context)
 
-@login_required
+@admin_required
 @transaction.atomic
 def procesar_nomina(request):
     """Vista para procesar y guardar la nómina"""
@@ -278,7 +285,7 @@ def procesar_nomina(request):
     # Si hay error o es GET, redirigir a generar nómina
     return redirect('generar_nomina')
 
-@login_required
+@admin_required
 def nomina_detalle(request, fecha_generacion, tipo_nomina_id):
     """Vista para ver el detalle de una nómina generada"""
     # Convertir fecha_generacion a objeto date
@@ -340,10 +347,16 @@ def nomina_detalle(request, fecha_generacion, tipo_nomina_id):
     
     return render(request, 'nomina_detalle.html', context)
 
-@login_required
+@admin_or_empleado_required
 def nomina_empleado(request, nomina_id):
-    """Vista para ver el detalle de una nómina de un empleado específico"""
+    """Vista para ver boleta individual - Admin ve todas, Empleado solo las suyas"""
     nomina = get_object_or_404(Nomina, id=nomina_id)
+    
+    # Si es empleado, verificar que sea su nómina
+    if request.user.rol.nombre == 'Empleado':
+        if not request.user.empleado or nomina.empleado != request.user.empleado:
+            messages.error(request, 'No tienes permisos para ver esta boleta de pago.')
+            return redirect('dashboard')
     
     # Obtener las deducciones
     deducciones = Deduccion.objects.filter(nomina=nomina)
@@ -364,15 +377,13 @@ def nomina_empleado(request, nomina_id):
     elif nomina.tipo_nomina.nombre == 'Semanal':
         bonificacion_incentivo = decimal.Decimal('250.00') / decimal.Decimal('4.33')
     
-    # Calcular otras bonificaciones (lo que no es salario base ni bonificación incentivo ni horas extras)
+    # Calcular otras bonificaciones
     total_sin_horas_extras = salario_base + bonificacion_incentivo
     horas_extras_valor = decimal.Decimal('0')
     
-    # Si el total devengado es mayor que salario + bonificación, la diferencia son horas extras u otras bonificaciones
     if nomina.total_devengado > total_sin_horas_extras:
         diferencia = nomina.total_devengado - total_sin_horas_extras
         
-        # Calcular el valor de la hora según tipo de nómina
         if nomina.tipo_nomina.nombre == 'Mensual':
             valor_hora = salario_base / decimal.Decimal('30') / decimal.Decimal('8')
         elif nomina.tipo_nomina.nombre == 'Quincenal':
@@ -380,30 +391,19 @@ def nomina_empleado(request, nomina_id):
         else:  # Semanal
             valor_hora = salario_base / decimal.Decimal('7') / decimal.Decimal('8')
         
-        # Buscar si hay deducciones adicionales
-        otras_bonificaciones = decimal.Decimal('0')
-        
-        # Calcular horas extras y otras bonificaciones
-        # Verificamos si la diferencia es mayor a cero
         if diferencia > decimal.Decimal('0'):
-            # Valor de hora extra
             valor_hora_extra = valor_hora * decimal.Decimal('1.5')
-            
-            # Obtenemos las horas extras del formulario original usando el registro en Deduccion
-            # En este caso lo calculamos basado en el total devengado
-            horas_extras = round(diferencia / valor_hora_extra, 2)  # Redondeamos a 2 decimales
+            horas_extras = round(diferencia / valor_hora_extra, 2)
             horas_extras_valor = diferencia
-            otras_bonificaciones = decimal.Decimal('0')
         else:
             horas_extras = decimal.Decimal('0')
             horas_extras_valor = decimal.Decimal('0')
     else:
         horas_extras = decimal.Decimal('0')
         horas_extras_valor = decimal.Decimal('0')
-        otras_bonificaciones = decimal.Decimal('0')
     
     # Calcular deducciones
-    igss = round(salario_base * decimal.Decimal('0.0483'), 2)  # IGSS solo se calcula sobre el salario base
+    igss = round(salario_base * decimal.Decimal('0.0483'), 2)
     isr_mensual = round(salario_base * decimal.Decimal('0.05'), 2)
     
     context = {
@@ -413,14 +413,15 @@ def nomina_empleado(request, nomina_id):
         'bonificacion_incentivo': bonificacion_incentivo,
         'horas_extras': horas_extras,
         'horas_extras_valor': horas_extras_valor,
-        'otras_bonificaciones': otras_bonificaciones,
+        'otras_bonificaciones': decimal.Decimal('0'),
         'igss': igss,
         'isr_mensual': isr_mensual,
+        'is_admin': request.user.rol.nombre == 'Admin',
     }
     
     return render(request, 'nomina_empleado.html', context)
 
-@login_required
+@admin_required
 @transaction.atomic
 def eliminar_nomina(request, fecha_generacion, tipo_nomina_id):
     """Vista para eliminar todas las nóminas de una fecha y tipo específicos"""
@@ -454,7 +455,7 @@ def eliminar_nomina(request, fecha_generacion, tipo_nomina_id):
     
     return redirect('nomina_list')
 
-@login_required
+@admin_required
 def generar_reporte_nomina_pdf(request, fecha_generacion, tipo_nomina_id):
     """Vista para generar un reporte PDF de la nómina"""
     # Convertir fecha_generacion a objeto date
@@ -492,3 +493,53 @@ def generar_reporte_nomina_pdf(request, fecha_generacion, tipo_nomina_id):
     response['Content-Disposition'] = f'attachment; filename="nomina_{tipo_nomina.nombre}_{fecha_generacion}.pdf"'
     
     return response
+
+@admin_required
+@transaction.atomic
+def pagar_nomina(request, fecha_generacion, tipo_nomina_id):
+    """Vista para marcar una nómina como pagada"""
+    if request.method == 'POST':
+        # Convertir fecha_generacion a objeto date
+        fecha_generacion_obj = datetime.datetime.strptime(fecha_generacion, "%Y-%m-%d").date()
+        tipo_nomina = get_object_or_404(TipoNomina, id=tipo_nomina_id)
+        
+        # Actualizar todas las nóminas de esa fecha y tipo
+        nominas = Nomina.objects.filter(
+            fecha_generacion=fecha_generacion_obj,
+            tipo_nomina=tipo_nomina
+        )
+        
+        if nominas.exists():
+            nominas.update(estado='Pagada', fecha_pago=timezone.now().date())
+            messages.success(request, "Nómina marcada como pagada exitosamente.")
+        else:
+            messages.error(request, "No se encontraron nóminas para actualizar.")
+        
+        return redirect('nomina_detalle', fecha_generacion=fecha_generacion, tipo_nomina_id=tipo_nomina_id)
+    
+    return redirect('nomina_list')
+
+@admin_required
+@transaction.atomic
+def cancelar_nomina(request, fecha_generacion, tipo_nomina_id):
+    """Vista para cancelar una nómina"""
+    if request.method == 'POST':
+        # Convertir fecha_generacion a objeto date
+        fecha_generacion_obj = datetime.datetime.strptime(fecha_generacion, "%Y-%m-%d").date()
+        tipo_nomina = get_object_or_404(TipoNomina, id=tipo_nomina_id)
+        
+        # Actualizar todas las nóminas de esa fecha y tipo
+        nominas = Nomina.objects.filter(
+            fecha_generacion=fecha_generacion_obj,
+            tipo_nomina=tipo_nomina
+        )
+        
+        if nominas.exists():
+            nominas.update(estado='Cancelada')
+            messages.success(request, "Nómina cancelada exitosamente.")
+        else:
+            messages.error(request, "No se encontraron nóminas para cancelar.")
+        
+        return redirect('nomina_detalle', fecha_generacion=fecha_generacion, tipo_nomina_id=tipo_nomina_id)
+    
+    return redirect('nomina_list')

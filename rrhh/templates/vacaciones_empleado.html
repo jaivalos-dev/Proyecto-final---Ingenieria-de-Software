@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Vacaciones | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vacaciones-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .vacaciones-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .dias-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0 auto 0.5rem;
+    }
+    .info-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vacaciones-header">
+    <div class="container">
+        <h1 class="display-6">Mis Vacaciones</h1>
+        <p class="lead">Consulta tu información de días de vacaciones</p>
+    </div>
+</div>
+
+{% for item in empleados_vacaciones %}
+<div class="vacaciones-card">
+    <div class="row align-items-center">
+        <div class="col-md-3 text-center">
+            <h4>{{ item.empleado.nombre }} {{ item.empleado.apellido }}</h4>
+            <p class="mb-0">{{ item.empleado.puesto.nombre }}</p>
+            <small>{{ item.años_servicio }} año(s) de servicio</small>
+        </div>
+        <div class="col-md-9">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="dias-circle bg-info">
+                        {{ item.dias_disponibles }}
+                    </div>
+                    <h6>Días Disponibles</h6>
+                    <small>Total ganados por tiempo de servicio</small>
+                </div>
+                <div class="col-md-4">
+                    <div class="dias-circle bg-warning">
+                        {{ item.dias_tomados }}
+                    </div>
+                    <h6>Días Tomados</h6>
+                    <small>Días que ya has disfrutado</small>
+                </div>
+                <div class="col-md-4">
+                    <div class="dias-circle bg-success">
+                        {{ item.dias_pendientes }}
+                    </div>
+                    <h6>Días Pendientes</h6>
+                    <small>Días que puedes tomar</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Información Legal</h5>
+            </div>
+            <div class="card-body">
+                <h6>Ley de Vacaciones en Guatemala:</h6>
+                <ul>
+                    <li><strong>15 días por año:</strong> Por cada año de servicio continuo</li>
+                    <li><strong>Proporcional:</strong> Si tienes menos de un año de servicio</li>
+                    <li><strong>Derecho adquirido:</strong> Se acumula desde tu primer día de trabajo</li>
+                    <li><strong>Pago obligatorio:</strong> Los días no tomados deben pagarse al finalizar la relación laboral</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Información Importante</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>¿Sabías que?</h6>
+                    <p class="mb-0">Tus días de vacaciones se calculan automáticamente según tu tiempo de servicio. Cada año completo de trabajo te da derecho a 15 días de vacaciones.</p>
+                </div>
+                
+                {% if item.dias_pendientes > 0 %}
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-plane-departure me-2"></i>¡Tienes {{ item.dias_pendientes }} días pendientes!</h6>
+                        <p class="mb-0">Recuerda que es importante tomar tus vacaciones para tu bienestar y productividad.</p>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-calendar-check me-2"></i>Has tomado todas tus vacaciones</h6>
+                        <p class="mb-0">¡Excelente! Has disfrutado todos tus días de vacaciones disponibles.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Historial de Vacaciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Cantidad</th>
+                                <th>Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Días ganados por tiempo de servicio</strong></td>
+                                <td><span class="badge bg-info">{{ item.dias_disponibles }} días</span></td>
+                                <td>{{ item.años_servicio }} año(s) × 15 días = {{ item.dias_disponibles }} días</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Días ya disfrutados</strong></td>
+                                <td><span class="badge bg-warning">{{ item.dias_tomados }} días</span></td>
+                                <td>Vacaciones tomadas desde tu ingreso</td>
+                            </tr>
+                            <tr class="table-success">
+                                <td><strong>Días disponibles para tomar</strong></td>
+                                <td><span class="badge bg-success">{{ item.dias_pendientes }} días</span></td>
+                                <td>Puedes solicitar estos días a Recursos Humanos</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <div class="alert alert-light">
+        <h6><i class="fas fa-question-circle me-2"></i>¿Necesitas solicitar vacaciones?</h6>
+        <p class="mb-2">Para solicitar tus días de vacaciones, contacta al departamento de Recursos Humanos o a tu supervisor directo.</p>
+        <small class="text-muted">Los días de vacaciones son un derecho laboral garantizado por la ley guatemalteca.</small>
+    </div>
+</div>
+{% endfor %}
+
+<div class="text-center mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+    </a>
+</div>
+{% endblock %}

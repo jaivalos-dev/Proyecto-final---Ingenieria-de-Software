@@ -1,5 +1,5 @@
 from django import forms
-from .models import Empleado, Puesto, Estado
+from .models import Empleado, Puesto, Estado, Rol, Usuario
 
 # rrhh/forms.py - Mejorar el formulario de empleados
 

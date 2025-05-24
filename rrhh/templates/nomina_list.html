@@ -58,21 +58,30 @@
 
 <div class="filter-section">
     <form method="get" class="row g-3">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label for="{{ filtro_form.fecha_desde.id_for_label }}" class="form-label">{{ filtro_form.fecha_desde.label }}</label>
             {{ filtro_form.fecha_desde }}
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label for="{{ filtro_form.fecha_hasta.id_for_label }}" class="form-label">{{ filtro_form.fecha_hasta.label }}</label>
             {{ filtro_form.fecha_hasta }}
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label for="{{ filtro_form.tipo_nomina.id_for_label }}" class="form-label">{{ filtro_form.tipo_nomina.label }}</label>
             {{ filtro_form.tipo_nomina }}
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <label for="{{ filtro_form.departamento.id_for_label }}" class="form-label">{{ filtro_form.departamento.label }}</label>
             {{ filtro_form.departamento }}
+        </div>
+        <div class="col-md-2">
+            <label for="estado" class="form-label">Estado</label>
+            <select class="form-select" id="estado" name="estado">
+                <option value="">Todos</option>
+                <option value="Generada" {% if request.GET.estado == 'Generada' %}selected{% endif %}>Generada</option>
+                <option value="Pagada" {% if request.GET.estado == 'Pagada' %}selected{% endif %}>Pagada</option>
+                <option value="Cancelada" {% if request.GET.estado == 'Cancelada' %}selected{% endif %}>Cancelada</option>
+            </select>
         </div>
         <div class="col-12 d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">
@@ -93,6 +102,12 @@
                     <div>
                         <span class="badge {% if nomina.tipo_nomina.nombre == 'Mensual' %}bg-primary{% elif nomina.tipo_nomina.nombre == 'Quincenal' %}bg-success{% else %}bg-info{% endif %} badge-tipo">
                             {{ nomina.tipo_nomina.nombre }}
+                        </span>
+                        <span class="badge 
+                            {% if nomina.estado == 'Pagada' %}bg-success
+                            {% elif nomina.estado == 'Cancelada' %}bg-danger
+                            {% else %}bg-warning{% endif %} badge-tipo ms-1">
+                            {{ nomina.estado }}
                         </span>
                     </div>
                     <div class="nomina-date">

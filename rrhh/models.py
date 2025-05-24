@@ -100,6 +100,12 @@ class Nomina(models.Model):
     total_deducciones = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total Deducciones")
     total_pagar = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Total a Pagar")
     fecha_generacion = models.DateField(verbose_name="Fecha de Generación")
+    estado = models.CharField(max_length=20, choices=[
+        ('Generada', 'Generada'),
+        ('Pagada', 'Pagada'),
+        ('Cancelada', 'Cancelada')
+    ], default='Generada', verbose_name="Estado")
+    fecha_pago = models.DateField(verbose_name="Fecha de Pago", null=True, blank=True)
     
     def __str__(self):
         return f"Nómina de {self.empleado} ({self.fecha_inicio} a {self.fecha_fin})"
@@ -150,18 +156,6 @@ class Prestacion(models.Model):
         verbose_name = "Prestación"
         verbose_name_plural = "Prestaciones"
 
-class IndicadorProductividad(models.Model):
-    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name="indicadores")
-    nombre = models.CharField(max_length=100, verbose_name="Nombre del Indicador")
-    valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor")
-    fecha_registro = models.DateField(verbose_name="Fecha de Registro")
-    
-    def __str__(self):
-        return f"{self.nombre} - {self.empleado}"
-    
-    class Meta:
-        verbose_name = "Indicador de Productividad"
-        verbose_name_plural = "Indicadores de Productividad"
 
 
 class Vacaciones(models.Model):

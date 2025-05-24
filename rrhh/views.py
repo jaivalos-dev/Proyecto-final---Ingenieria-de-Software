@@ -4,16 +4,35 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Sum, Q
-from .models import Empleado, Departamento, Nomina, IndicadorProductividad, Rol, Usuario, Estado, Puesto
+from .models import Empleado, Departamento, Nomina, Rol, Usuario, Estado, Puesto, Vacaciones
 from .forms import EmpleadoForm
 from django.utils import timezone
 import datetime
 from django.http import JsonResponse
+from .decorators import admin_required, empleado_required, admin_or_empleado_required
 
+@login_required
 def dashboard(request):
-    """Vista para el dashboard principal del sistema"""
+    """Vista para el dashboard - diferentes para Admin y Empleado"""
     if not request.user.is_authenticated:
         return redirect('login')
+    
+    # Verificar si el usuario tiene rol
+    if not hasattr(request.user, 'rol') or not request.user.rol:
+        messages.error(request, 'Tu usuario no tiene un rol asignado. Contacta al administrador.')
+        return redirect('login')
+    
+    if request.user.rol.nombre == 'Admin':
+        return dashboard_admin(request)
+    elif request.user.rol.nombre == 'Empleado':
+        return dashboard_empleado(request)
+    else:
+        messages.error(request, 'Rol no reconocido.')
+        return redirect('login')
+
+@admin_required
+def dashboard_admin(request):
+    """Dashboard completo para administradores"""
     
     # Obtener datos para el dashboard
     total_empleados = Empleado.objects.filter(fecha_baja__isnull=True).count()
@@ -28,14 +47,6 @@ def dashboard(request):
         fecha_fin__gte=hoy
     ).aggregate(total=Sum('total_pagar'))
     total_nomina = nomina_actual['total'] if nomina_actual['total'] else 0
-    
-    # Calcular promedio de productividad (ejemplo)
-    indicadores = IndicadorProductividad.objects.filter(
-        fecha_registro__gte=hoy - datetime.timedelta(days=30)
-    )
-    productividad = 0
-    if indicadores.exists():
-        productividad = round(indicadores.aggregate(avg_valor=Sum('valor') / indicadores.count())['avg_valor'], 2)
     
     # Obtener empleados recientes
     empleados_recientes = Empleado.objects.filter(
@@ -73,12 +84,51 @@ def dashboard(request):
         'total_empleados': total_empleados,
         'total_departamentos': total_departamentos,
         'total_nomina': total_nomina,
-        'productividad': productividad,
         'empleados_recientes': empleados_recientes,
         'proximas_nominas': proximas_nominas_agrupadas,
+        'is_admin': True,
     }
     
     return render(request, 'dashboard.html', context)
+
+@empleado_required
+def dashboard_empleado(request):
+    """Dashboard limitado para empleados"""
+    empleado = request.user.empleado
+    
+    if not empleado:
+        messages.error(request, 'Tu usuario no tiene un empleado asociado. Contacta al administrador.')
+        return redirect('login')
+    
+    # Obtener solo información del empleado actual
+    hoy = timezone.now().date()
+    
+    # Sus nóminas recientes (últimas 5)
+    mis_nominas = Nomina.objects.filter(
+        empleado=empleado
+    ).order_by('-fecha_generacion')[:5]
+    
+    # Sus vacaciones
+    try:
+        mis_vacaciones = Vacaciones.objects.get(empleado=empleado)
+        # Calcular días pendientes
+        mis_vacaciones.dias_pendientes = mis_vacaciones.dias_totales - mis_vacaciones.dias_tomados
+    except Vacaciones.DoesNotExist:
+        mis_vacaciones = None
+    
+    # Sus prestaciones recientes
+    mis_prestaciones = empleado.prestaciones.all().order_by('-fecha_calculo')[:3]
+    
+    context = {
+        'empleado': empleado,
+        'mis_nominas': mis_nominas,
+        'mis_vacaciones': mis_vacaciones,
+        'mis_prestaciones': mis_prestaciones,
+        'is_admin': False,
+    }
+    
+    return render(request, 'dashboard_empleado.html', context)
+
 
 def login_view(request):
     """Vista para el inicio de sesión"""
@@ -150,6 +200,7 @@ def register(request):
 
 
 @login_required
+@admin_required
 def empleados_list(request):
     """Vista para listar empleados con filtros y paginación"""
     
@@ -191,6 +242,7 @@ def empleados_list(request):
 
 
 @login_required
+@admin_required
 def empleado_nuevo(request):
     """Vista para crear un nuevo empleado"""
     if request.method == 'POST':
@@ -219,6 +271,7 @@ def empleado_nuevo(request):
 
 
 @login_required
+@admin_required
 def empleado_editar(request, pk):
     """Vista para editar un empleado existente"""
     empleado = get_object_or_404(Empleado, pk=pk)
@@ -242,11 +295,11 @@ def empleado_editar(request, pk):
 
 
 @login_required
+@admin_required
 def empleado_detalle(request, pk):
     """Vista para ver los detalles de un empleado"""
     empleado = get_object_or_404(Empleado, pk=pk)
     
-    # Puedes ordenar prestaciones por fecha_calculo en lugar de fecha_prestacion
     prestaciones = empleado.prestaciones.all().order_by('-fecha_calculo')
     
     context = {
@@ -258,6 +311,7 @@ def empleado_detalle(request, pk):
 
 
 @login_required
+@admin_required
 def empleado_eliminar(request, pk):
     """Vista para eliminar un empleado"""
     empleado = get_object_or_404(Empleado, pk=pk)
@@ -275,6 +329,7 @@ def empleado_eliminar(request, pk):
     return redirect('empleados_list')
 
 @login_required
+@admin_required
 def puesto_salario(request, pk):
     """API simple para obtener el salario de un puesto"""
     try:

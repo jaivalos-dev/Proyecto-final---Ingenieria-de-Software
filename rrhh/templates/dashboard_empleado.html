@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Dashboard | Gestor RRHH{% endblock %}
+
+{% block extra_css %}
+<style>
+    .empleado-header {
+        background-color: #f8f9fa;
+        padding: 1.5rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0.3rem;
+    }
+    .card-empleado {
+        transition: transform 0.3s;
+    }
+    .card-empleado:hover {
+        transform: translateY(-5px);
+    }
+    .info-personal {
+        background-color: #e7f3ff;
+        border-left: 4px solid #0066cc;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="empleado-header">
+    <div class="container">
+        <h1 class="display-6">¡Bienvenido, {{ empleado.nombre }}!</h1>
+        <p class="lead">Panel de Empleado - {{ empleado.puesto.nombre }}</p>
+    </div>
+</div>
+
+<!-- Información Personal -->
+<div class="info-personal">
+    <div class="row">
+        <div class="col-md-3">
+            <strong>Puesto:</strong> {{ empleado.puesto.nombre }}
+        </div>
+        <div class="col-md-3">
+            <strong>Departamento:</strong> {{ empleado.puesto.departamento.nombre }}
+        </div>
+        <div class="col-md-3">
+            <strong>Fecha de Ingreso:</strong> {{ empleado.fecha_ingreso|date:"d/m/Y" }}
+        </div>
+        <div class="col-md-3">
+            <strong>Estado:</strong> 
+            <span class="badge bg-success">{{ empleado.estado.nombre }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Mis Vacaciones -->
+    <div class="col-md-6 mb-4">
+        <div class="card card-empleado h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-plane-departure me-2"></i>Mis Vacaciones</h5>
+            </div>
+            <div class="card-body">
+                {% if mis_vacaciones %}
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 class="text-primary">{{ mis_vacaciones.dias_totales }}</h4>
+                            <small class="text-muted">Días Disponibles</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-warning">{{ mis_vacaciones.dias_tomados }}</h4>
+                            <small class="text-muted">Días Tomados</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-success">{{ mis_vacaciones.dias_pendientes }}</h4>
+                            <small class="text-muted">Días Pendientes</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="text-center mb-0">
+                        <small class="text-muted">
+                            Consulta tus días de vacaciones en la sección correspondiente
+                        </small>
+                    </p>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-info-circle text-muted mb-2 fa-2x"></i>
+                        <p class="text-muted">No hay información de vacaciones disponible</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Mis Últimas Boletas -->
+    <div class="col-md-6 mb-4">
+        <div class="card card-empleado h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Mis Últimas Boletas</h5>
+            </div>
+            <div class="card-body">
+                {% if mis_nominas %}
+                    <div class="list-group list-group-flush">
+                        {% for nomina in mis_nominas %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ nomina.tipo_nomina.nombre }}</h6>
+                                    <small class="text-muted">{{ nomina.fecha_inicio|date:"d/m/Y" }} - {{ nomina.fecha_fin|date:"d/m/Y" }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="fw-bold text-success">Q{{ nomina.total_pagar|floatformat:2 }}</span><br>
+                                    <a href="{% url 'nomina_empleado' nomina.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-info-circle text-muted mb-2 fa-2x"></i>
+                        <p class="text-muted">No hay boletas de pago disponibles</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mis Prestaciones -->
+{% if mis_prestaciones %}
+<div class="row">
+    <div class="col-12">
+        <div class="card card-empleado">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-gift me-2"></i>Mis Prestaciones Recientes</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for prestacion in mis_prestaciones %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">{{ prestacion.tipo_prestacion.nombre }}</h6>
+                                    <h4 class="text-success">Q{{ prestacion.monto|floatformat:2 }}</h4>
+                                    <span class="badge 
+                                        {% if prestacion.estado.nombre == 'Pagado' %}bg-success
+                                        {% elif prestacion.estado.nombre == 'Calculado' %}bg-info
+                                        {% else %}bg-warning{% endif %}">
+                                        {{ prestacion.estado.nombre }}
+                                    </span>
+                                    <br><small class="text-muted">{{ prestacion.fecha_calculo|date:"d/m/Y" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Acciones Rápidas para Empleado -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Mis Acciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{% url 'vacaciones_list' %}" class="btn btn-info w-100 py-3">
+                            <i class="fas fa-plane-departure me-2"></i>Ver Mis Vacaciones
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

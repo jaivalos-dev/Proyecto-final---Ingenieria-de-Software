@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, views_nomina, views_prestaciones, views_vacaciones
+from . import views, views_nomina, views_prestaciones, views_vacaciones, views_liquidaciones
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -25,6 +25,8 @@ urlpatterns = [
     path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/eliminar/', views_nomina.eliminar_nomina, name='eliminar_nomina'),
     path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/reporte/', views_nomina.generar_reporte_nomina_pdf, name='generar_reporte_nomina_pdf'),
     path('api/puestos/<int:pk>/salario/', views.puesto_salario, name='puesto_salario'),
+    path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/pagar/', views_nomina.pagar_nomina, name='pagar_nomina'),
+    path('nominas/<str:fecha_generacion>/<int:tipo_nomina_id>/cancelar/', views_nomina.cancelar_nomina, name='cancelar_nomina'),
     
     # Prestaciones URLs
     path('prestaciones/', views_prestaciones.prestaciones_list, name='prestaciones_list'),
@@ -38,5 +40,12 @@ urlpatterns = [
     # Vacaciones URLs
     path('vacaciones/', views_vacaciones.vacaciones_list, name='vacaciones_list'),
     path('vacaciones/actualizar/<int:vacaciones_id>/', views_vacaciones.actualizar_vacaciones, name='actualizar_vacaciones'),   
+    
+    # Liquidaciones URLs
+    path('liquidaciones/', views_liquidaciones.liquidaciones_list, name='liquidaciones_list'),
+    path('liquidaciones/calcular/', views_liquidaciones.calcular_liquidacion, name='calcular_liquidacion'),
+    path('liquidaciones/<int:pk>/', views_liquidaciones.liquidacion_detalle, name='liquidacion_detalle'),
+    path('liquidaciones/<int:pk>/pagar/', views_liquidaciones.pagar_liquidacion, name='pagar_liquidacion'),
+    path('liquidaciones/<int:pk>/eliminar/', views_liquidaciones.eliminar_liquidacion, name='eliminar_liquidacion'),
 
 ]

@@ -11,8 +11,9 @@ import decimal
 import datetime
 
 from .models import Empleado, Prestacion, TipoPrestacion, EstadoPrestacion, Nomina
+from .decorators import admin_required, empleado_required, admin_or_empleado_required
 
-@login_required
+@admin_required
 def prestaciones_list(request):
     """Vista para listar todas las prestaciones"""
     # Filtrar prestaciones
@@ -51,7 +52,7 @@ def prestaciones_list(request):
     
     return render(request, 'prestaciones_list.html', context)
 
-@login_required
+@admin_required
 def prestacion_detalle(request, pk):
     """Vista para ver detalle de una prestación"""
     prestacion = get_object_or_404(Prestacion, pk=pk)
@@ -62,7 +63,7 @@ def prestacion_detalle(request, pk):
     
     return render(request, 'prestacion_detalle.html', context)
 
-@login_required
+@admin_required
 def calcular_prestacion(request):
     """Vista para calcular una nueva prestación"""
     if request.method == 'POST':
@@ -173,7 +174,7 @@ def calcular_prestacion(request):
     
     return render(request, 'calcular_prestacion.html', context)
 
-@login_required
+@admin_required
 @transaction.atomic
 def pagar_prestacion(request, pk):
     """Vista para marcar una prestación como pagada"""
@@ -198,7 +199,7 @@ def pagar_prestacion(request, pk):
     
     return redirect('prestacion_detalle', pk=pk)
 
-@login_required
+@admin_required
 @transaction.atomic
 def cancelar_prestacion(request, pk):
     """Vista para cancelar una prestación"""
@@ -273,7 +274,7 @@ def calcular_monto_prestacion(empleado, tipo_prestacion, periodo_inicio, periodo
     
     return monto
 
-@login_required
+@admin_required
 @transaction.atomic
 def recalcular_prestacion(request, pk):
     """Vista para recalcular una prestación existente"""
@@ -310,7 +311,7 @@ def recalcular_prestacion(request, pk):
     
     return redirect('prestacion_detalle', pk=pk)
 
-@login_required
+@admin_required
 @transaction.atomic
 def eliminar_prestacion(request, pk):
     """Vista para eliminar una prestación"""
