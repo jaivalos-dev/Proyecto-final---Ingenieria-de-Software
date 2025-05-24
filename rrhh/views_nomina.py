@@ -9,7 +9,7 @@ from django.http import HttpResponse
 import decimal
 import datetime
 from .utils import generar_reporte_nomina
-
+from django.db import connection
 from .models import Empleado, Nomina, Deduccion, TipoNomina, Departamento, Estado, Puesto
 from .forms_nomina import GenerarNominaForm, EmpleadoNominaFormSet, FiltroNominaForm
 from .decorators import admin_required, empleado_required, admin_or_empleado_required
@@ -138,151 +138,85 @@ def generar_nomina(request):
 def procesar_nomina(request):
     """Vista para procesar y guardar la nómina"""
     if request.method == 'POST':
-        # Recuperar parámetros
         tipo_nomina_id = request.POST.get('tipo_nomina')
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
         departamento_id = request.POST.get('departamento')
-        
+
         tipo_nomina = get_object_or_404(TipoNomina, id=tipo_nomina_id)
         departamento = Departamento.objects.get(id=departamento_id) if departamento_id else None
-        
-        # Obtener empleados activos
+
         empleados = Empleado.objects.filter(estado__nombre='Activo')
         if departamento:
             empleados = empleados.filter(puesto__departamento=departamento)
-        
-        # Procesar formset
+
         formset = EmpleadoNominaFormSet(request.POST)
-        
+
         if formset.is_valid():
             fecha_generacion = timezone.now().date()
             nominas_creadas = []
-            
-            # Factor para calcular la bonificación según el tipo de nómina
-            # Asegurarse de usar Decimal en lugar de float
-            factor_bonificacion = decimal.Decimal('1.0')  # Mensual por defecto
-            if tipo_nomina.nombre == 'Quincenal':
-                factor_bonificacion = decimal.Decimal('0.5')
-            elif tipo_nomina.nombre == 'Semanal':
-                factor_bonificacion = decimal.Decimal('0.23')  # Aproximado para 4.33 semanas por mes
-            
+
             for form in formset:
                 if form.is_valid():
-                    # Obtener datos del empleado
                     empleado_id = form.cleaned_data['empleado_id']
                     empleado = get_object_or_404(Empleado, id=empleado_id)
-                    
-                    # Obtener datos adicionales
+
                     horas_extras = form.cleaned_data.get('horas_extras') or 0
                     bonificaciones_adicionales = form.cleaned_data.get('bonificaciones_adicionales') or 0
                     deducciones_adicionales = form.cleaned_data.get('deducciones_adicionales') or 0
                     motivo_deduccion = form.cleaned_data.get('motivo_deduccion') or ''
-                    
-                    # Convertir a Decimal si no lo son ya
-                    if not isinstance(horas_extras, decimal.Decimal):
-                        horas_extras = decimal.Decimal(str(horas_extras))
-                    if not isinstance(bonificaciones_adicionales, decimal.Decimal):
-                        bonificaciones_adicionales = decimal.Decimal(str(bonificaciones_adicionales))
-                    if not isinstance(deducciones_adicionales, decimal.Decimal):
-                        deducciones_adicionales = decimal.Decimal(str(deducciones_adicionales))
-                    
-                    # CÁLCULOS DE LA NÓMINA
-                    
-                    # 1. Salario base según el tipo de nómina
-                    salario_base = empleado.puesto.salario_base
-                    if tipo_nomina.nombre == 'Quincenal':
-                        salario_base = salario_base / decimal.Decimal('2')
-                    elif tipo_nomina.nombre == 'Semanal':
-                        salario_base = salario_base / decimal.Decimal('4.33')  # 4.33 semanas promedio por mes
-                    
-                    # 2. Bonificación incentivo (ley de Guatemala: Q250.00 mensual)
-                    bonificacion_incentivo = decimal.Decimal('250.00') * factor_bonificacion
-                    
-                    # 3. Cálculo de horas extras
-                    # Usar Decimal para divisiones
-                    if tipo_nomina.nombre == 'Mensual':
-                        valor_hora = salario_base / decimal.Decimal('30') / decimal.Decimal('8')
-                    elif tipo_nomina.nombre == 'Quincenal':
-                        valor_hora = salario_base / decimal.Decimal('15') / decimal.Decimal('8')
-                    else:  # Semanal
-                        valor_hora = salario_base / decimal.Decimal('7') / decimal.Decimal('8')
-                    
-                    monto_horas_extras = valor_hora * decimal.Decimal('1.5') * horas_extras
-                    
-                    # 4. Total devengado
-                    total_devengado = salario_base + bonificacion_incentivo + monto_horas_extras + bonificaciones_adicionales
-                    
-                    # 5. Deducciones
-                    
-                    # IGSS (4.83% sobre el salario base y horas extras, no sobre bonificaciones)
-                    base_igss = salario_base + monto_horas_extras
-                    igss = round(salario_base * decimal.Decimal('0.0483'), 2)
-                    
-                    # ISR (depende del salario anual, proyectado a partir del salario mensual)
-                    salario_mensual_proyectado = empleado.puesto.salario_base
-                    salario_anual = salario_mensual_proyectado * decimal.Decimal('12')
-                    isr_mensual = round(salario_base * decimal.Decimal('0.05'), 2)
-                    
-                    # if salario_anual > decimal.Decimal('300000'):
-                    #     # 5% sobre el excedente de Q300,000
-                    #     isr_anual = (salario_anual - decimal.Decimal('300000')) * decimal.Decimal('0.05')
-                    #     isr_mensual = round(isr_anual / decimal.Decimal('12'), 2)
-                        
-                    #     # Ajustar según tipo de nómina
-                    #     if tipo_nomina.nombre == 'Quincenal':
-                    #         isr_mensual = isr_mensual / decimal.Decimal('2')
-                    #     elif tipo_nomina.nombre == 'Semanal':
-                    #         isr_mensual = isr_mensual / decimal.Decimal('4.33')
-                    
-                    # 6. Total deducciones
-                    total_deducciones = igss + isr_mensual + deducciones_adicionales
-                    
-                    # 7. Total a pagar
-                    total_pagar = total_devengado - total_deducciones
-                    
-                    # Crear la nómina
+
+                    # Llamar al SP para calcular la nómina
+                    datos = calcular_nomina_sp(
+                        empleado_id=empleado.id,
+                        horas_extras=horas_extras,
+                        bonificacion_adicional=bonificaciones_adicionales,
+                        deduccion_adicional=deducciones_adicionales
+                    )
+
+                    if datos is None:
+                        messages.error(request, f"No se pudo calcular la nómina para {empleado.nombre} {empleado.apellido}.")
+                        continue
+
                     nomina = Nomina.objects.create(
                         empleado=empleado,
                         fecha_inicio=fecha_inicio,
                         fecha_fin=fecha_fin,
                         tipo_nomina=tipo_nomina,
-                        total_devengado=total_devengado,
-                        total_deducciones=total_deducciones,
-                        total_pagar=total_pagar,
-                        fecha_generacion=fecha_generacion
+                        total_devengado=datos['total_devengado'],
+                        total_deducciones=datos['total_deducciones'],
+                        total_pagar=datos['total_pagar'],
+                        fecha_generacion=fecha_generacion,
+                        estado='Generada'
                     )
-                    
-                    # Crear deducciones
-                    if igss > 0:
+
+                    # Crear deducciones individuales
+                    if datos['igss'] > 0:
                         Deduccion.objects.create(
                             nomina=nomina,
                             nombre="IGSS (4.83%)",
-                            monto=igss
+                            monto=datos['igss']
                         )
-                    
-                    if isr_mensual > 0:
+                    if datos['isr'] > 0:
                         Deduccion.objects.create(
                             nomina=nomina,
                             nombre="ISR (5%)",
-                            monto=isr_mensual
+                            monto=datos['isr']
                         )
-                    
-                    if deducciones_adicionales > 0:
+                    if datos['otras_deducciones'] > 0:
                         Deduccion.objects.create(
                             nomina=nomina,
                             nombre=motivo_deduccion or "Deducción adicional",
-                            monto=deducciones_adicionales
+                            monto=datos['otras_deducciones']
                         )
-                    
+
                     nominas_creadas.append(nomina)
-            
+
             messages.success(request, f"Se han generado {len(nominas_creadas)} nóminas correctamente.")
             return redirect('nomina_list')
         else:
             messages.error(request, "Hay errores en el formulario. Por favor, corríjalos e intente nuevamente.")
-    
-    # Si hay error o es GET, redirigir a generar nómina
+
     return redirect('generar_nomina')
 
 @admin_required
@@ -543,3 +477,25 @@ def cancelar_nomina(request, fecha_generacion, tipo_nomina_id):
         return redirect('nomina_detalle', fecha_generacion=fecha_generacion, tipo_nomina_id=tipo_nomina_id)
     
     return redirect('nomina_list')
+
+def calcular_nomina_sp(empleado_id, horas_extras=0, bonificacion_adicional=0, deduccion_adicional=0):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT * FROM calcular_nomina(%s, %s, %s, %s);",
+            [empleado_id, horas_extras, bonificacion_adicional, deduccion_adicional]
+        )
+        row = cursor.fetchone()
+
+        if row:
+            return {
+                'salario_base': row[0],
+                'bonificacion_incentivo': row[1],
+                'horas_extras_valor': row[2],
+                'total_devengado': row[3],
+                'igss': row[4],
+                'isr': row[5],
+                'otras_deducciones': row[6],
+                'total_deducciones': row[7],
+                'total_pagar': row[8]
+            }
+    return None

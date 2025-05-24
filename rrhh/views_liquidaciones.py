@@ -9,7 +9,7 @@ from django.db import transaction
 from dateutil.relativedelta import relativedelta
 import decimal
 import datetime
-
+from django.db import connection
 from .models import Empleado, Liquidacion, Vacaciones, TipoPrestacion, Prestacion, EstadoPrestacion, Estado
 from .decorators import admin_required, empleado_required, admin_or_empleado_required
 
@@ -81,9 +81,13 @@ def calcular_liquidacion(request):
         try:
             with transaction.atomic():
                 # Calcular la liquidación
-                liquidacion_data = calcular_montos_liquidacion(empleado)
+                liquidacion_data = calcular_liquidacion_sp(empleado.id)
+
+                if not liquidacion_data:
+                    raise Exception("El SP no devolvió datos válidos para el empleado.")
                 
-                # Crear la liquidación
+                igss_deduccion = empleado.puesto.salario_base * decimal.Decimal('0.0483')
+
                 liquidacion = Liquidacion.objects.create(
                     empleado=empleado,
                     tipo='Liquidación General',
@@ -93,9 +97,9 @@ def calcular_liquidacion(request):
                     aguinaldo_proporcional=liquidacion_data['aguinaldo_proporcional'],
                     bono14_proporcional=liquidacion_data['bono14_proporcional'],
                     total_ingresos=liquidacion_data['total_ingresos'],
-                    total_deducciones=liquidacion_data['total_deducciones'],
-                    total_liquidacion=liquidacion_data['total_liquidacion'],
-                    observaciones=liquidacion_data['observaciones']
+                    total_deducciones=igss_deduccion,
+                    total_liquidacion=liquidacion_data['total_ingresos'] - igss_deduccion,
+                    observaciones='Liquidación calculada desde SP'
                 )
                 
                 # Marcar al empleado como de baja
@@ -328,3 +332,18 @@ def eliminar_liquidacion(request, pk):
         return redirect('liquidaciones_list')
     
     return redirect('liquidacion_detalle', pk=pk)
+
+def calcular_liquidacion_sp(empleado_id):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM calcular_liquidacion(%s);", [empleado_id])
+        row = cursor.fetchone()
+
+        if row:
+            return {
+                'indemnizacion': row[0],
+                'vacaciones_pendientes': row[1],
+                'aguinaldo_proporcional': row[2],
+                'bono14_proporcional': row[3],
+                'total_ingresos': row[4]
+            }
+    return None
