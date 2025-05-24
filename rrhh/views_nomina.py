@@ -50,7 +50,7 @@ def nomina_list(request):
     # Agrupar nóminas por fecha de generación y tipo
     nominas_agrupadas = {}
     for nomina in nominas:
-        key = (nomina.fecha_generacion, nomina.tipo_nomina.id)
+        key = (nomina.fecha_generacion, nomina.tipo_nomina.id, nomina.estado)
         if key not in nominas_agrupadas:
             nominas_agrupadas[key] = {
                 'fecha_generacion': nomina.fecha_generacion,

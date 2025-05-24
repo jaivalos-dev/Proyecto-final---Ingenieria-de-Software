@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import formset_factory
 from django.utils import timezone
-from .models import Empleado, TipoNomina, Nomina, Puesto, Departamento
+from .models import Empleado, TipoNomina, Nomina, Puesto, Departamento, Estado
 
 class GenerarNominaForm(forms.Form):
     """Formulario para generar una nómina"""
@@ -42,11 +42,11 @@ class GenerarNominaForm(forms.Form):
                 fecha_inicio__lte=fecha_fin,
                 fecha_fin__gte=fecha_inicio,
                 tipo_nomina=tipo_nomina
-            )
-            
+            ).exclude(estado='Cancelada')
+
             if departamento:
                 query = query.filter(empleado__puesto__departamento=departamento)
-                
+
             if query.exists():
                 raise forms.ValidationError(
                     "Ya existe una nómina para el período y tipo seleccionado. Por favor, verifique las fechas."
